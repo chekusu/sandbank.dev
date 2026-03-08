@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
-import { subscribe, getLocale, t as translate, type Locale, type TranslationKey } from '@/i18n'
+import { getLocale, subscribe, t as translate, type TranslationKey } from '@/i18n'
 
-export function useLocale(): Locale {
+export function useLocale() {
   return useSyncExternalStore(subscribe, getLocale)
 }
 

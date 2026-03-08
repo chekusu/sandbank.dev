@@ -1,12 +1,31 @@
+import { useEffect, useState } from 'react'
+import { codeToHtml } from 'shiki'
+
 export default function CodeBlock({ filename, children }: { filename: string; children: string }) {
+  const [html, setHtml] = useState('')
+
+  useEffect(() => {
+    codeToHtml(children.trim(), {
+      lang: 'typescript',
+      theme: 'vitesse-dark',
+    }).then(setHtml)
+  }, [children])
+
   return (
     <div className="relative">
-      <span className="absolute -top-3 left-4 px-2 bg-surface text-[0.6rem] font-mono uppercase tracking-widest text-text-muted">
+      <span className="absolute -top-3 left-4 px-2 bg-surface text-[0.6rem] font-mono uppercase tracking-widest text-text-muted z-10">
         {filename}
       </span>
-      <pre className="!rounded-none !border-x-0 !border-t border-b border-sand-400/10 !bg-transparent !px-0 !py-6">
-        <code className="text-[0.8rem] leading-[1.8] text-text-secondary">{children}</code>
-      </pre>
+      {html ? (
+        <div
+          className="code-block-highlight"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <pre className="!rounded-xl border border-sand-400/10 !bg-surface-raised !px-6 !py-6">
+          <code className="text-[0.8rem] leading-[1.8] text-text-secondary">{children}</code>
+        </pre>
+      )}
     </div>
   )
 }
