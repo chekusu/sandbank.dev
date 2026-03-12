@@ -248,7 +248,13 @@ export default function Cloud() {
           </p>
 
           <div className="border border-sand-400/20 rounded-2xl p-8 sm:p-12 bg-sand-400/[0.03]">
-            <span className="font-mono text-2xl text-sand-400 tracking-tight">{t('cloudImageName')}</span>
+            <div className="flex items-baseline gap-4 mb-2">
+              <span className="font-mono text-2xl text-sand-400 tracking-tight">{t('cloudImageName')}</span>
+              <div className="flex gap-2">
+                <span className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-sand-400/20 text-sand-400">Claude Code</span>
+                <span className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-sand-400/20 text-sand-400">Codex</span>
+              </div>
+            </div>
             <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
               {t('cloudImageDesc')}
             </p>
@@ -262,7 +268,10 @@ export default function Cloud() {
                 <span className="font-mono text-[0.75rem] text-text-muted">{t('cloudImageWeb')}</span>
               </div>
             </div>
-            <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-6">
+            <p className="font-mono text-[0.6rem] text-text-muted opacity-30 mt-6 leading-relaxed">
+              {t('cloudImageDetail')}
+            </p>
+            <p className="font-mono text-[0.6rem] text-text-muted opacity-30 mt-2">
               {t('cloudImageNote')}
             </p>
           </div>
