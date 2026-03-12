@@ -256,9 +256,13 @@ export default function Cloud() {
               <span className="font-mono text-[0.75rem] text-text-muted">Memory</span>
               <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsMem')}</span>
             </div>
-            <div className="border-t border-b border-sand-400/10 py-5 flex items-baseline justify-between">
+            <div className="border-t border-sand-400/10 py-5 flex items-baseline justify-between">
               <span className="font-mono text-[0.75rem] text-text-muted">Session</span>
               <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsSession')}</span>
+            </div>
+            <div className="border-t border-b border-sand-400/10 py-5 flex items-baseline justify-between">
+              <span className="font-mono text-[0.75rem] text-text-muted">Disk</span>
+              <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsDisk')}</span>
             </div>
           </div>
 
