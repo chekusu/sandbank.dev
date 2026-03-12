@@ -46,19 +46,19 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-const features = [
-  { label: 'KVM', value: 'Bare-metal isolation' },
-  { label: 'Warm Pool', value: 'Sub-second starts' },
-  { label: 'Ports', value: 'Auto-mapped forwarding' },
-  { label: 'WebSocket', value: 'Terminal & proxy' },
-  { label: 'x402', value: 'Pay-per-use USDC' },
-  { label: 'REST', value: 'Simple JSON API' },
-]
-
 const SKILL_LINE = 'Read https://cloud.sandbank.dev/skill.md and follow instructions'
 
 export default function Cloud() {
   const t = useT()
+
+  const features = [
+    { label: 'KVM', value: t('cloudFeatureKvm') },
+    { label: 'Warm Pool', value: t('cloudFeatureWarmPool') },
+    { label: 'Ports', value: t('cloudFeaturePorts') },
+    { label: 'WebSocket', value: t('cloudFeatureWs') },
+    { label: 'x402', value: t('cloudFeatureX402') },
+    { label: 'REST', value: t('cloudFeatureRest') },
+  ]
 
   const endpoints = [
     { method: 'POST', path: '/v1/boxes', desc: t('cloudEndpointCreate'), price: '$0.02' },
@@ -105,7 +105,7 @@ export default function Cloud() {
             <br />
             {t('cloudHeroDesc2')}
           </p>
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-10">
             <a
               href="#agent"
               className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-sand-400 border border-sand-400/30 px-6 py-2.5 rounded-full hover:bg-sand-400/10 transition-colors"
@@ -118,6 +118,19 @@ export default function Cloud() {
             >
               {t('cloudPricing')}
             </a>
+          </div>
+
+          {/* Speed + Price callout */}
+          <div className="flex items-center gap-8">
+            <div className="text-center">
+              <span className="block font-mono text-2xl text-sand-400 tracking-tight">{t('cloudSpeed')}</span>
+              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-50">{t('cloudSpeedLabel')}</span>
+            </div>
+            <div className="w-px h-8 bg-sand-400/20" />
+            <div className="text-center">
+              <span className="block font-mono text-2xl text-sand-400 tracking-tight">$0.02</span>
+              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-50">{t('cloudPerSandbox')}</span>
+            </div>
           </div>
         </div>
 
@@ -202,6 +215,59 @@ export default function Cloud() {
           </p>
         </section>
 
+        {/* ── Resource Limits ── */}
+        <section className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+            {t('cloudLimits')}
+          </p>
+
+          <div className="space-y-0">
+            <div className="border-t border-sand-400/10 py-5 flex items-baseline justify-between">
+              <span className="font-mono text-[0.75rem] text-text-muted">CPU</span>
+              <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsCpu')}</span>
+            </div>
+            <div className="border-t border-sand-400/10 py-5 flex items-baseline justify-between">
+              <span className="font-mono text-[0.75rem] text-text-muted">Memory</span>
+              <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsMem')}</span>
+            </div>
+            <div className="border-t border-b border-sand-400/10 py-5 flex items-baseline justify-between">
+              <span className="font-mono text-[0.75rem] text-text-muted">Session</span>
+              <span className="font-mono text-lg text-text-secondary">{t('cloudLimitsSession')}</span>
+            </div>
+          </div>
+
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+            {t('cloudLimitsNote')}
+          </p>
+        </section>
+
+        {/* ── Default Image ── */}
+        <section className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+            {t('cloudImage')}
+          </p>
+
+          <div className="border border-sand-400/20 rounded-2xl p-8 sm:p-12 bg-sand-400/[0.03]">
+            <span className="font-mono text-2xl text-sand-400 tracking-tight">{t('cloudImageName')}</span>
+            <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
+              {t('cloudImageDesc')}
+            </p>
+            <div className="space-y-0">
+              <div className="border-t border-sand-400/10 py-3 flex items-baseline gap-3">
+                <span className="font-mono text-[0.65rem] text-sand-400 uppercase w-16">7681</span>
+                <span className="font-mono text-[0.75rem] text-text-muted">{t('cloudImageTerminal')}</span>
+              </div>
+              <div className="border-t border-b border-sand-400/10 py-3 flex items-baseline gap-3">
+                <span className="font-mono text-[0.65rem] text-sand-400 uppercase w-16">8080</span>
+                <span className="font-mono text-[0.75rem] text-text-muted">{t('cloudImageWeb')}</span>
+              </div>
+            </div>
+            <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-6">
+              {t('cloudImageNote')}
+            </p>
+          </div>
+        </section>
+
         {/* ── Features ── */}
         <section className="py-24">
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
@@ -231,7 +297,7 @@ export default function Cloud() {
 # The server returns 402 with payment details, your x402 client pays and retries
 curl -X POST https://cloud.sandbank.dev/v1/boxes \\
   -H "Content-Type: application/json" \\
-  -d '{"image": "ubuntu:24.04", "cpu": 2, "memory_mb": 1024}'
+  -d '{"image": "codebox", "cpu": 2, "memory_mb": 1024}'
 
 # → {"id": "aQscOYX87tSq", "status": "running", ...}`}</CodeBlock>
 
@@ -261,21 +327,22 @@ import { SandbankCloudAdapter } from '@sandbank.dev/cloud'
 
 const provider = createProvider(
   new SandbankCloudAdapter({
-    url: 'https://cloud.sandbank.dev',
-    // x402 payment is handled automatically by the adapter
-    wallet: process.env.WALLET_PRIVATE_KEY,
+    // x402: pay $0.02/sandbox with USDC on Base
+    walletPrivateKey: process.env.WALLET_PRIVATE_KEY,
+
+    // Or use API token (bypasses x402 payment)
+    // apiToken: process.env.SANDBANK_API_TOKEN,
   })
 )
 
 const sandbox = await provider.create({
-  image: 'ubuntu:24.04',
-  cpu: 2,
-  memory_mb: 1024,
-  ports: [[0, 8080]],
+  image: 'codebox',
+  resources: { cpu: 2, memory: 1024 },
+  ports: [[0, 7681], [0, 8080]],
 })
 
-const result = await sandbox.exec('node -e "console.log(42)"')
-console.log(result.stdout) // 42
+const { stdout } = await sandbox.exec('node -e "console.log(42)"')
+console.log(stdout) // 42
 
 await provider.destroy(sandbox.id)`}</CodeBlock>
         </section>
@@ -330,7 +397,7 @@ await provider.destroy(sandbox.id)`}</CodeBlock>
           <CodeBlock filename="ports.sh" lang="bash">{`# Create sandbox with port forwarding
 curl -X POST https://cloud.sandbank.dev/v1/boxes \\
   -H "Content-Type: application/json" \\
-  -d '{"image": "ubuntu:24.04", "ports": [[0, 8080], [0, 7681]]}'
+  -d '{"image": "codebox", "ports": [[0, 8080], [0, 7681]]}'
 
 # → {"id": "abc", "ports": {"8080": 10042, "7681": 10043}, ...}
 
