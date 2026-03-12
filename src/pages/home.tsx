@@ -3,6 +3,7 @@ import AsciiCanvas from '@/components/ascii-canvas'
 import CodeBlock from '@/components/code-block'
 import { useT, useLocale } from '@/hooks/use-i18n'
 import { setLocale, locales, localeLabels, type Locale } from '@/i18n'
+import { Link } from 'react-router'
 
 const providers = [
   { name: 'Daytona', arch: 'Full VM', cold: '~10 s', caps: 'port.expose · terminal · volumes' },
@@ -45,6 +46,7 @@ export default function Home() {
         <nav className="relative z-10 flex items-center justify-between px-8 sm:px-12 h-16">
           <span className="font-mono text-xs uppercase tracking-[0.15em] text-sand-400">sandbank</span>
           <div className="flex items-center gap-6">
+            <Link to="/cloud" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-sand-400 hover:text-sand-400/80 transition-colors">{t('cloud')}</Link>
             <a href="#start" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('docs')}</a>
             <a href="https://github.com/chekusu/sandbank" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">GitHub</a>
             <LangSwitcher />
