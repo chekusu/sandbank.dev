@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CustomCursor from '@/components/custom-cursor'
 import AsciiCanvas from '@/components/ascii-canvas'
 import CodeBlock from '@/components/code-block'
@@ -43,6 +43,32 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? 'Copied!' : 'Copy'}
     </button>
+  )
+}
+
+function StatusBadge() {
+  const t = useT()
+  const [status, setStatus] = useState<'checking' | 'online' | 'offline'>('checking')
+
+  useEffect(() => {
+    const check = () => {
+      fetch('https://cloud.sandbank.dev/health', { mode: 'cors' })
+        .then(r => r.ok ? setStatus('online') : setStatus('offline'))
+        .catch(() => setStatus('offline'))
+    }
+    check()
+    const id = setInterval(check, 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const color = status === 'online' ? 'bg-emerald-400' : status === 'offline' ? 'bg-red-400' : 'bg-text-muted'
+  const label = status === 'online' ? t('cloudStatusOnline') : status === 'offline' ? t('cloudStatusOffline') : t('cloudStatusChecking')
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full ${color} ${status === 'online' ? 'animate-pulse' : ''}`} />
+      <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-60">{label}</span>
+    </span>
   )
 }
 
@@ -420,8 +446,9 @@ curl http://cloud.sandbank.dev:10042/`}</CodeBlock>
         {/* Footer */}
         <footer className="py-10 border-t border-sand-400/8">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40">
-              sandbank cloud · {t('cloudFooter')}
+            <span className="inline-flex items-center gap-4 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40">
+              <span>sandbank cloud · {t('cloudFooter')}</span>
+              <StatusBadge />
             </span>
             <Link to="/" className="link-underline font-mono text-[0.6rem] uppercase tracking-[0.1em]">
               sandbank.dev →
