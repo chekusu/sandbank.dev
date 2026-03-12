@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { codeToHtml } from 'shiki'
 
-export default function CodeBlock({ filename, children }: { filename: string; children: string }) {
+export default function CodeBlock({ filename, children, lang = 'typescript' }: { filename: string; children: string; lang?: string }) {
   const [html, setHtml] = useState('')
 
   useEffect(() => {
     codeToHtml(children.trim(), {
-      lang: 'typescript',
+      lang,
       theme: 'vitesse-dark',
     }).then(setHtml)
-  }, [children])
+  }, [children, lang])
 
   return (
     <div className="relative">
