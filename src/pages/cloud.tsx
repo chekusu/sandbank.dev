@@ -368,6 +368,10 @@ export default function Cloud() {
                   <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
                   <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserBoxAuth')}</span>
                 </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserBoxShot')}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -376,12 +380,14 @@ export default function Cloud() {
 browser open https://docs.example.com
 browser snapshot -i              # accessibility tree with refs
 browser click @e2                # interact by ref
+browser screenshot               # save PNG to /tmp/screenshot.png
 
 # Chrome mode: real browser for complex sites
 browser open --chrome https://app.example.com/login
 browser fill @e1 "user@email.com"
 browser fill @e2 "password"
 browser click @e3                # submit login
+browser screenshot               # visual confirmation
 browser save logged-in           # snapshot VM state
 browser destroy                  # back to Lightpanda`}</CodeBlock>
 

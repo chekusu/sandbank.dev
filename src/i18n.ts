@@ -115,6 +115,7 @@ const translations = {
     cloudBrowserBoxFull: 'Full Chrome rendering & JS',
     cloudBrowserBoxSnap: 'VM snapshots — save & restore sessions',
     cloudBrowserBoxAuth: 'Login flows, OAuth, CAPTCHAs',
+    cloudBrowserBoxShot: 'PNG screenshots via relay',
     cloudBrowserNote: 'The agent decides which mode to use. Add --chrome when a site needs real Chrome. Once a browserbox exists, all commands route to it automatically.',
     // DB9
     cloudDb9: 'Database',
@@ -232,6 +233,7 @@ const translations = {
     cloudBrowserBoxFull: '完整 Chrome 渲染与 JS',
     cloudBrowserBoxSnap: 'VM 快照 — 保存和恢复会话',
     cloudBrowserBoxAuth: '登录流程、OAuth、验证码',
+    cloudBrowserBoxShot: 'PNG 截图通过 relay 传输',
     cloudBrowserNote: 'Agent 自行判断使用哪种模式。需要真实 Chrome 时加 --chrome。Browserbox 创建后，后续命令自动路由到它。',
     // DB9
     cloudDb9: '数据库',
@@ -349,6 +351,7 @@ const translations = {
     cloudBrowserBoxFull: '完全なChromeレンダリングとJS',
     cloudBrowserBoxSnap: 'VMスナップショット — セッションの保存と復元',
     cloudBrowserBoxAuth: 'ログインフロー、OAuth、CAPTCHA',
+    cloudBrowserBoxShot: 'PNGスクリーンショット（relay経由）',
     cloudBrowserNote: 'エージェントがモードを自動判断。本物のChromeが必要な場合は --chrome を付加。Browserbox作成後、以降のコマンドは自動的にルーティング。',
     // DB9
     cloudDb9: 'データベース',
