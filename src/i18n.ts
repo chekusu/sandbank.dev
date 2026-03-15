@@ -9,10 +9,10 @@ export const localeLabels: Record<Locale, string> = {
 
 const translations = {
   en: {
-    badge: 'v0.1.0 · Open Source · MIT',
+    badge: 'v0.2.0 · Open Source · MIT',
     heroTitle1: 'Unified Sandbox SDK',
     heroTitle2: 'for AI Agents',
-    heroDesc1: 'One TypeScript interface. Four cloud providers.',
+    heroDesc1: 'One TypeScript interface. Six cloud providers.',
     heroDesc2: 'Zero vendor lock-in.',
     getStarted: 'Get Started',
     scroll: 'Scroll ↓',
@@ -112,10 +112,10 @@ const translations = {
     cloudBrowserNote: 'The agent decides which mode to use. Add --chrome when a site needs real Chrome. Once a browserbox exists, all commands route to it automatically.',
   },
   zh: {
-    badge: 'v0.1.0 · 开源 · MIT',
+    badge: 'v0.2.0 · 开源 · MIT',
     heroTitle1: '统一沙箱 SDK',
     heroTitle2: '为 AI 智能体而生',
-    heroDesc1: '一套 TypeScript 接口，四家云服务商。',
+    heroDesc1: '一套 TypeScript 接口，六家云服务商。',
     heroDesc2: '零厂商锁定。',
     getStarted: '开始使用',
     scroll: '向下滚动 ↓',
@@ -215,10 +215,10 @@ const translations = {
     cloudBrowserNote: 'Agent 自行判断使用哪种模式。需要真实 Chrome 时加 --chrome。Browserbox 创建后，后续命令自动路由到它。',
   },
   ja: {
-    badge: 'v0.1.0 · オープンソース · MIT',
+    badge: 'v0.2.0 · オープンソース · MIT',
     heroTitle1: '統合サンドボックスSDK',
     heroTitle2: 'AIエージェントのための',
-    heroDesc1: 'ひとつの TypeScript インターフェース、4つのクラウド。',
+    heroDesc1: 'ひとつの TypeScript インターフェース、6つのクラウド。',
     heroDesc2: 'ベンダーロックインなし。',
     getStarted: 'はじめる',
     scroll: 'スクロール ↓',

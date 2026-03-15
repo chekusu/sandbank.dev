@@ -6,10 +6,12 @@ import { setLocale, locales, localeLabels, type Locale } from '@/i18n'
 import { Link } from 'react-router'
 
 const providers = [
+  { name: 'Sandbank Cloud', arch: 'Managed KVM', cold: '< 1 s', caps: 'exec · port.expose · snapshot · browser' },
   { name: 'Daytona', arch: 'Full VM', cold: '~10 s', caps: 'port.expose · terminal · volumes' },
   { name: 'Fly.io', arch: 'Firecracker microVM', cold: '~3-5 s', caps: 'exec.stream · port.expose' },
   { name: 'Cloudflare', arch: 'V8 isolate + container', cold: '~1 s', caps: 'exec.stream · snapshot · sleep · port.expose' },
   { name: 'BoxLite', arch: 'Bare-metal KVM', cold: '~2-5 s', caps: 'exec.stream · snapshot · sleep' },
+  { name: 'DB9', arch: 'OrbStack microVM', cold: '~1-2 s', caps: 'exec · port.expose · snapshot' },
 ]
 
 function LangSwitcher() {
@@ -261,6 +263,10 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
               pnpm add @sandbank.dev/core
             </div>
             <div className="border-t border-sand-400/10 py-4">
+              <span className="text-text-muted text-[0.65rem] mr-4">cloud</span>
+              pnpm add @sandbank.dev/cloud
+            </div>
+            <div className="border-t border-sand-400/10 py-4">
               <span className="text-text-muted text-[0.65rem] mr-4">daytona</span>
               pnpm add @sandbank.dev/daytona
             </div>
@@ -272,9 +278,13 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
               <span className="text-text-muted text-[0.65rem] mr-4">cloudflare</span>
               pnpm add @sandbank.dev/cloudflare
             </div>
-            <div className="border-t border-b border-sand-400/10 py-4">
+            <div className="border-t border-sand-400/10 py-4">
               <span className="text-text-muted text-[0.65rem] mr-4">boxlite</span>
               pnpm add @sandbank.dev/boxlite
+            </div>
+            <div className="border-t border-b border-sand-400/10 py-4">
+              <span className="text-text-muted text-[0.65rem] mr-4">db9</span>
+              pnpm add @sandbank.dev/db9
             </div>
           </div>
 
@@ -305,7 +315,7 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
               {t('footerMit')}
             </span>
             <span className="font-mono text-[0.6rem] text-text-muted opacity-30">
-              v0.1.0
+              v0.2.0
             </span>
           </div>
         </footer>
