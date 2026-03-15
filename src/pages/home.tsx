@@ -11,7 +11,6 @@ const providers = [
   { name: 'Fly.io', arch: 'Firecracker microVM', cold: '~3-5 s', caps: 'exec.stream · port.expose' },
   { name: 'Cloudflare', arch: 'V8 isolate + container', cold: '~1 s', caps: 'exec.stream · snapshot · sleep · port.expose' },
   { name: 'BoxLite', arch: 'Bare-metal KVM', cold: '~2-5 s', caps: 'exec.stream · snapshot · sleep' },
-  { name: 'DB9', arch: 'OrbStack microVM', cold: '~1-2 s', caps: 'exec · port.expose · snapshot' },
 ]
 
 function LangSwitcher() {
@@ -190,6 +189,57 @@ if (streamable) {
 }`}</CodeBlock>
         </section>
 
+        {/* Service Layer */}
+        <section className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+            {t('serviceLayer')}
+          </p>
+
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+            {t('serviceTitle1')}
+            <br />
+            <span className="text-text-muted">{t('serviceTitle2')}</span>
+          </h2>
+
+          <div className="border border-sand-400/20 rounded-2xl p-8 sm:p-12 bg-sand-400/[0.03] mb-8">
+            <div className="flex items-baseline gap-4 mb-2">
+              <span className="font-mono text-2xl text-sand-400 tracking-tight">DB9</span>
+              <span className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-sand-400/20 text-sand-400">ServiceProvider</span>
+            </div>
+            <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
+              {t('serviceDb9Desc')}
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-50">
+              <span>PostgreSQL 17</span>
+              <span>pgvector</span>
+              <span>pg_cron</span>
+              <span>{t('serviceDb9Branch')}</span>
+              <span>LISTEN/NOTIFY</span>
+            </div>
+          </div>
+
+          <CodeBlock filename="service.ts">{`import { createProvider } from '@sandbank.dev/core'
+import { DaytonaAdapter } from '@sandbank.dev/daytona'
+import { Db9ServiceAdapter } from '@sandbank.dev/db9'
+
+const compute = createProvider(new DaytonaAdapter({ apiKey: '...' }))
+const db9 = new Db9ServiceAdapter({ token: process.env.DB9_TOKEN! })
+
+// Create a database — credentials auto-injected into sandbox
+const db = await db9.createService({ type: 'postgres', name: 'my-app' })
+
+const sandbox = await compute.create({
+  image: 'node:22',
+  env: db.credentials.env,  // DATABASE_URL, PGHOST, PGPORT, ...
+})
+
+await sandbox.exec('psql $DATABASE_URL -c "SELECT version()"')`}</CodeBlock>
+
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+            {t('serviceNote')}
+          </p>
+        </section>
+
         {/* Multi-Agent */}
         <section className="py-24">
           <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
@@ -278,10 +328,11 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
               <span className="text-text-muted text-[0.65rem] mr-4">cloudflare</span>
               pnpm add @sandbank.dev/cloudflare
             </div>
-            <div className="border-t border-sand-400/10 py-4">
+            <div className="border-t border-b border-sand-400/10 py-4">
               <span className="text-text-muted text-[0.65rem] mr-4">boxlite</span>
               pnpm add @sandbank.dev/boxlite
             </div>
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-sand-400/60 mt-6 mb-2">{t('serviceLayer')}</p>
             <div className="border-t border-b border-sand-400/10 py-4">
               <span className="text-text-muted text-[0.65rem] mr-4">db9</span>
               pnpm add @sandbank.dev/db9
