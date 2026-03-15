@@ -80,10 +80,10 @@ export default function Cloud() {
   const features = [
     { label: 'KVM', value: t('cloudFeatureKvm') },
     { label: 'Warm Pool', value: t('cloudFeatureWarmPool') },
+    { label: 'Browser', value: t('cloudFeatureBrowser') },
     { label: 'Ports', value: t('cloudFeaturePorts') },
     { label: 'WebSocket', value: t('cloudFeatureWs') },
     { label: 'x402', value: t('cloudFeatureX402') },
-    { label: 'REST', value: t('cloudFeatureRest') },
   ]
 
   const endpoints = [
@@ -109,6 +109,7 @@ export default function Cloud() {
           <Link to="/" className="font-mono text-xs uppercase tracking-[0.15em] text-sand-400">sandbank</Link>
           <div className="flex items-center gap-6">
             <a href="#agent" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudAgent')}</a>
+            <a href="#browser" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudBrowser')}</a>
             <a href="#pricing" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudPricing')}</a>
             <a href="#api" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudApiRef')}</a>
             <a href="https://github.com/chekusu/sandbank" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">GitHub</a>
@@ -305,6 +306,87 @@ export default function Cloud() {
               {t('cloudImageNote')}
             </p>
           </div>
+        </section>
+
+        {/* ── Browser Automation ── */}
+        <section id="browser" className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+            {t('cloudBrowser')}
+          </p>
+
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+            <span className="text-sand-400">{t('cloudBrowserTitle1')}</span>
+            <br />
+            <span className="text-text-muted">{t('cloudBrowserTitle2')}</span>
+          </h2>
+
+          {/* Two modes */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            <div className="border border-sand-400/20 rounded-2xl p-6 sm:p-8 bg-sand-400/[0.03]">
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className="font-mono text-lg text-sand-400">Lightpanda</span>
+                <span className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-emerald-400/30 text-emerald-400/70">{t('cloudBrowserDefault')}</span>
+              </div>
+              <p className="font-mono text-[0.75rem] text-text-muted leading-relaxed mb-4">
+                {t('cloudBrowserLightpandaDesc')}
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserLpFast')}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserLpLight')}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-text-muted/40">–</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted opacity-50">{t('cloudBrowserLpLimit')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-sand-400/20 rounded-2xl p-6 sm:p-8 bg-sand-400/[0.03]">
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className="font-mono text-lg text-sand-400">Browserbox</span>
+                <span className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-sand-400/20 text-sand-400">--chrome</span>
+              </div>
+              <p className="font-mono text-[0.75rem] text-text-muted leading-relaxed mb-4">
+                {t('cloudBrowserBoxDesc')}
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserBoxFull')}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserBoxSnap')}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[0.6rem] text-emerald-400/70">+</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted">{t('cloudBrowserBoxAuth')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <CodeBlock filename="browser-automation.sh" lang="bash">{`# Default: Lightpanda (fast, in-sandbox)
+browser open https://docs.example.com
+browser snapshot -i              # accessibility tree with refs
+browser click @e2                # interact by ref
+
+# Chrome mode: real browser for complex sites
+browser open --chrome https://app.example.com/login
+browser fill @e1 "user@email.com"
+browser fill @e2 "password"
+browser click @e3                # submit login
+browser save logged-in           # snapshot VM state
+browser destroy                  # back to Lightpanda`}</CodeBlock>
+
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+            {t('cloudBrowserNote')}
+          </p>
         </section>
 
         {/* ── Features ── */}
