@@ -81,7 +81,7 @@ export default function Cloud() {
     { label: 'KVM', value: t('cloudFeatureKvm') },
     { label: 'Warm Pool', value: t('cloudFeatureWarmPool') },
     { label: 'Browser', value: t('cloudFeatureBrowser') },
-    { label: 'Ports', value: t('cloudFeaturePorts') },
+    { label: 'DB9', value: t('cloudFeatureDb9') },
     { label: 'WebSocket', value: t('cloudFeatureWs') },
     { label: 'x402', value: t('cloudFeatureX402') },
   ]
@@ -110,6 +110,7 @@ export default function Cloud() {
           <div className="flex items-center gap-6">
             <a href="#agent" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudAgent')}</a>
             <a href="#browser" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudBrowser')}</a>
+            <a href="#db9" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">DB9</a>
             <a href="#pricing" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudPricing')}</a>
             <a href="#api" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudApiRef')}</a>
             <a href="https://github.com/chekusu/sandbank" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">GitHub</a>
@@ -386,6 +387,60 @@ browser destroy                  # back to Lightpanda`}</CodeBlock>
 
           <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
             {t('cloudBrowserNote')}
+          </p>
+        </section>
+
+        {/* ── DB9 ── */}
+        <section id="db9" className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+            {t('cloudDb9')}
+          </p>
+
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+            <span className="text-sand-400">{t('cloudDb9Title1')}</span>
+            <br />
+            <span className="text-text-muted">{t('cloudDb9Title2')}</span>
+          </h2>
+
+          <div className="border border-sand-400/20 rounded-2xl p-8 sm:p-12 bg-sand-400/[0.03] mb-8">
+            <div className="flex items-baseline gap-4 mb-2">
+              <span className="font-mono text-2xl text-sand-400 tracking-tight">db9</span>
+              <a href="https://db9.ai" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.6rem] px-2 py-0.5 rounded border border-sand-400/20 text-sand-400 hover:bg-sand-400/10 transition-colors">db9.ai</a>
+            </div>
+            <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
+              {t('cloudDb9Desc')}
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-50">
+              <span>PostgreSQL 17</span>
+              <span>pgvector</span>
+              <span>pg_cron</span>
+              <span>fs9</span>
+              <span>HTTP ext</span>
+              <span>{t('cloudDb9Fts')}</span>
+            </div>
+          </div>
+
+          <CodeBlock filename="db9-in-sandbox.sh" lang="bash">{`# db9 CLI is pre-installed in every codebox
+
+# Create a database (zero-setup trial on first use)
+db9 db create --name myapp
+
+# Execute SQL
+db9 db sql myapp -q "CREATE TABLE users (id serial, name text, email text)"
+db9 db sql myapp -q "INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com')"
+
+# Vector search with pgvector
+db9 db sql myapp -q "CREATE EXTENSION vector"
+db9 db sql myapp -q "ALTER TABLE users ADD COLUMN embedding vector(1536)"
+
+# Branch a database for isolated testing
+db9 branch create myapp --name experiment
+
+# Or connect directly with psql
+psql $DATABASE_URL -c "SELECT * FROM users"`}</CodeBlock>
+
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+            {t('cloudDb9Note')}
           </p>
         </section>
 
