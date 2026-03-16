@@ -96,6 +96,7 @@ export default function Cloud() {
     { method: 'GET', path: '/v1/boxes/:id/files?path=/', desc: t('cloudEndpointDownload') },
     { method: 'DELETE', path: '/v1/boxes/:id', desc: t('cloudEndpointDestroy') },
     { method: 'ALL', path: '/v1/boxes/:id/proxy/:port/*', desc: t('cloudEndpointProxy') },
+    { method: 'POST', path: '/v1/boxes/:id/clone', desc: t('cloudEndpointClone') },
   ]
 
   return (
