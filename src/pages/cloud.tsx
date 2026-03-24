@@ -97,6 +97,10 @@ export default function Cloud() {
     { method: 'DELETE', path: '/v1/boxes/:id', desc: t('cloudEndpointDestroy') },
     { method: 'ALL', path: '/v1/boxes/:id/proxy/:port/*', desc: t('cloudEndpointProxy') },
     { method: 'POST', path: '/v1/boxes/:id/clone', desc: t('cloudEndpointClone') },
+    { method: 'POST', path: '/v1/boxes/:id/snapshots', desc: t('cloudEndpointSnapshotCreate') },
+    { method: 'GET', path: '/v1/boxes/:id/snapshots', desc: t('cloudEndpointSnapshotList') },
+    { method: 'POST', path: '/v1/boxes/:id/snapshots/:name/restore', desc: t('cloudEndpointSnapshotRestore') },
+    { method: 'DELETE', path: '/v1/boxes/:id/snapshots/:name', desc: t('cloudEndpointSnapshotDelete') },
   ]
 
   return (
