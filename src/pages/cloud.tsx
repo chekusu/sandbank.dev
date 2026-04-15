@@ -80,12 +80,23 @@ function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
 
   useEffect(() => {
     if (!open) return
-    const onClick = (e: MouseEvent) => {
+    const onDocClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
   }, [open])
+
+  const handleItemClick = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    setOpen(false)
+    const id = href.slice(1)
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      history.replaceState(null, '', href)
+    }
+  }
 
   return (
     <div ref={ref} className="relative md:hidden">
@@ -107,7 +118,7 @@ function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
             <a
               key={item.href}
               href={item.href}
-              onClick={() => setOpen(false)}
+              onClick={handleItemClick(item.href)}
               className="block font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-sand-400 hover:bg-sand-400/5 px-4 py-3 border-b border-sand-400/10 last:border-b-0 transition-colors"
             >
               {item.label}
