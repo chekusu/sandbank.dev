@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import CustomCursor from '@/components/custom-cursor'
 import AsciiCanvas from '@/components/ascii-canvas'
 import CodeBlock from '@/components/code-block'
@@ -74,8 +74,61 @@ function StatusBadge() {
 
 const SKILL_LINE = 'Read https://cloud.sandbank.dev/skill.md and follow instructions'
 
+function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative md:hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-label="menu"
+        aria-expanded={open}
+        className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
+      >
+        <span className="flex flex-col gap-[3px]">
+          <span className={`block w-3.5 h-px bg-current transition-transform ${open ? 'translate-y-[4px] rotate-45' : ''}`} />
+          <span className={`block w-3.5 h-px bg-current transition-opacity ${open ? 'opacity-0' : ''}`} />
+          <span className={`block w-3.5 h-px bg-current transition-transform ${open ? '-translate-y-[4px] -rotate-45' : ''}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-3 min-w-[10rem] border border-sand-400/20 rounded-xl bg-surface-raised/95 backdrop-blur-sm shadow-lg overflow-hidden">
+          {items.map(item => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="block font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-sand-400 hover:bg-sand-400/5 px-4 py-3 border-b border-sand-400/10 last:border-b-0 transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Cloud() {
   const t = useT()
+
+  const navItems = [
+    { href: '#agent', label: t('cloudAgent') },
+    { href: '#browser', label: t('cloudBrowser') },
+    { href: '#db9', label: 'DB9' },
+    { href: '#pricing', label: t('cloudPricing') },
+    { href: '#api', label: t('cloudApiRef') },
+  ]
 
   const features = [
     { label: 'KVM', value: t('cloudFeatureKvm') },
@@ -114,14 +167,13 @@ export default function Cloud() {
           <Link to="/" className="font-mono text-xs uppercase tracking-[0.15em] text-sand-400">sandbank</Link>
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="hidden md:flex items-center gap-6">
-              <a href="#agent" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudAgent')}</a>
-              <a href="#browser" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudBrowser')}</a>
-              <a href="#db9" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">DB9</a>
-              <a href="#pricing" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudPricing')}</a>
-              <a href="#api" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudApiRef')}</a>
+              {navItems.map(item => (
+                <a key={item.href} href={item.href} className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{item.label}</a>
+              ))}
             </div>
             <a href="https://github.com/chekusu/sandbank" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">GitHub</a>
             <LangSwitcher />
+            <MobileMenu items={navItems} />
           </div>
         </nav>
 
