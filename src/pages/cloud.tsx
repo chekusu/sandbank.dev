@@ -110,14 +110,16 @@ export default function Cloud() {
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
         {/* Nav */}
-        <nav className="relative z-10 flex items-center justify-between px-8 sm:px-12 h-16">
+        <nav className="relative z-10 flex items-center justify-between px-6 sm:px-12 h-16">
           <Link to="/" className="font-mono text-xs uppercase tracking-[0.15em] text-sand-400">sandbank</Link>
-          <div className="flex items-center gap-6">
-            <a href="#agent" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudAgent')}</a>
-            <a href="#browser" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudBrowser')}</a>
-            <a href="#db9" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">DB9</a>
-            <a href="#pricing" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudPricing')}</a>
-            <a href="#api" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudApiRef')}</a>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="hidden md:flex items-center gap-6">
+              <a href="#agent" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudAgent')}</a>
+              <a href="#browser" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudBrowser')}</a>
+              <a href="#db9" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">DB9</a>
+              <a href="#pricing" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudPricing')}</a>
+              <a href="#api" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">{t('cloudApiRef')}</a>
+            </div>
             <a href="https://github.com/chekusu/sandbank" target="_blank" rel="noopener noreferrer" className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted hover:text-text-primary transition-colors">GitHub</a>
             <LangSwitcher />
           </div>
