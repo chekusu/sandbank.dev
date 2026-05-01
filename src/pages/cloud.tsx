@@ -138,6 +138,7 @@ export default function Cloud() {
     { href: '#browser', label: t('cloudBrowser') },
     { href: '#db9', label: 'DB9' },
     { href: '#pricing', label: t('cloudPricing') },
+    { href: '#webhooks', label: t('cloudWebhooks') },
     { href: '#api', label: t('cloudApiRef') },
   ]
 
@@ -597,6 +598,90 @@ const { stdout } = await sandbox.exec('node -e "console.log(42)"')
 console.log(stdout) // 42
 
 await provider.destroy(sandbox.id)`}</CodeBlock>
+        </section>
+
+        {/* ── Lifecycle Webhooks ── */}
+        <section id="webhooks" className="py-24">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+            {t('cloudWebhooks')}
+          </p>
+
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-8">
+            <span className="text-sand-400">{t('cloudWebhooksTitle1')}</span>
+            <br />
+            <span className="text-text-muted">{t('cloudWebhooksTitle2')}</span>
+          </h2>
+
+          <p className="font-mono text-[0.75rem] text-text-muted leading-relaxed mb-10">
+            {t('cloudWebhooksDesc')}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            <div className="border border-sand-400/20 rounded-2xl p-6 sm:p-8 bg-sand-400/[0.03]">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.15em] text-sand-400 mb-4">
+                {t('cloudWebhooksAdminTitle')}
+              </p>
+              <p className="font-mono text-[0.75rem] text-text-muted leading-relaxed">
+                {t('cloudWebhooksAdminDesc')}
+              </p>
+            </div>
+            <div className="border border-sand-400/20 rounded-2xl p-6 sm:p-8 bg-sand-400/[0.03]">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.15em] text-sand-400 mb-4">
+                {t('cloudWebhooksTenantTitle')}
+              </p>
+              <p className="font-mono text-[0.75rem] text-text-muted leading-relaxed">
+                {t('cloudWebhooksTenantDesc')}
+              </p>
+            </div>
+          </div>
+
+          <CodeBlock filename="admin-webhook.env" lang="bash">{`ADMIN_BOX_LIFECYCLE_WEBHOOK_URL=https://ops.example.com/webhooks/sandbank
+ADMIN_BOX_LIFECYCLE_WEBHOOK_TOKEN=change-me
+ADMIN_BOX_LIFECYCLE_WEBHOOK_TIMEOUT_MS=2000`}</CodeBlock>
+
+          <div className="h-8" />
+
+          <CodeBlock filename="tenant-webhooks.env" lang="bash">{`# Tenant ids must match box user_id values.
+# For API keys, user_id is the AGENT_API_KEYS label: wanman:key
+TENANT_BOX_LIFECYCLE_WEBHOOKS='{
+  "wanman": {
+    "url": "https://wanman.example.com/webhooks/sandbank",
+    "secret": "wanman-hmac-secret",
+    "token": "optional-bearer-token",
+    "events": ["box.error", "box.terminated"],
+    "timeout_ms": 1500
+  }
+}'
+TENANT_BOX_LIFECYCLE_WEBHOOK_TIMEOUT_MS=2000`}</CodeBlock>
+
+          <div className="mt-8 mb-8">
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+              {t('cloudWebhooksEvents')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {['box.error', 'box.terminated', 'box.status_changed'].map(event => (
+                <span key={event} className="font-mono text-[0.65rem] px-2 py-1 rounded border border-sand-400/20 text-sand-400">
+                  {event}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <CodeBlock filename="tenant-payload.json" lang="json">{`{
+  "event": "box.error",
+  "audience": "tenant",
+  "tenant_id": "wanman",
+  "box_id": "box-1",
+  "image": "codebox",
+  "previous_status": "running",
+  "status": "error",
+  "reason": "probe_failure",
+  "observed_at": "2026-05-01T05:41:00.000Z"
+}`}</CodeBlock>
+
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8 leading-relaxed">
+            {t('cloudWebhooksHeaders')}
+          </p>
         </section>
 
         {/* ── API Reference ── */}
