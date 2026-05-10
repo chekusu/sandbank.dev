@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite --port 3140",
+    "dev": "portless sandbank-dev vite",
     "build": "vite build",
-    "preview": "vite preview --port 3140"
+    "preview": "portless sandbank-dev vite preview"
   },
   "dependencies": {
     "react": "^19.1.0",
