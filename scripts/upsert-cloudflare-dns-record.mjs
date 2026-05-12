@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const token = process.env.CLOUDFLARE_API_TOKEN
+const zoneIdFromEnv = process.env.CLOUDFLARE_ZONE_ID
 const zoneName = process.env.CLOUDFLARE_ZONE_NAME || 'sandbank.dev'
 const recordName = process.env.DNS_RECORD_NAME
 const recordType = process.env.DNS_RECORD_TYPE || 'A'
@@ -17,8 +18,11 @@ const headers = {
   'content-type': 'application/json',
 }
 
-const zone = await cf(`/zones?name=${encodeURIComponent(zoneName)}`)
-const zoneId = zone.result?.[0]?.id
+let zoneId = zoneIdFromEnv
+if (!zoneId) {
+  const zone = await cf(`/zones?name=${encodeURIComponent(zoneName)}`)
+  zoneId = zone.result?.[0]?.id
+}
 if (!zoneId) throw new Error(`Cloudflare zone not found: ${zoneName}`)
 
 const existing = await cf(`/zones/${zoneId}/dns_records?type=${encodeURIComponent(recordType)}&name=${encodeURIComponent(recordName)}`)
