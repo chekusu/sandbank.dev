@@ -21,7 +21,7 @@ interface BootstrapResponse {
   tenant: { id: string; name: string; slug: string; created_at?: string }
   projects: Project[]
   project_nodes?: ProjectNode[]
-  current_project: Project
+  current_project: Project | null
   billing: BillingAccount
   api_keys: ApiKey[]
   initial_api_key: string | null
@@ -301,18 +301,32 @@ function PanelDashboard() {
     setLoading(true)
     setError(null)
     try {
-      const [nextBootstrap, nextSummary, boxesBody, nextBilling] = await Promise.all([
-        requestJson<BootstrapResponse>(withProject('/v1/panel/bootstrap', projectId), 'panelErrorBootstrap'),
-        requestJson<SummaryResponse>(withProject('/v1/panel/summary', projectId), 'panelErrorSummary'),
-        requestJson<{ boxes: PanelBox[] }>(withProject('/v1/panel/boxes', projectId), 'panelErrorBoxes'),
+      const nextBootstrap = await requestJson<BootstrapResponse>(
+        withProject('/v1/panel/bootstrap', projectId),
+        'panelErrorBootstrap',
+      )
+      setBootstrap(nextBootstrap)
+      const currentProjectId = nextBootstrap.current_project?.id ?? null
+
+      if (!currentProjectId) {
+        setSummary(null)
+        setBoxes([])
+        setSelectedProjectId(null)
+        const nextBilling = await requestJson<BillingDetailResponse>('/v1/panel/billing', 'panelErrorBilling')
+        setBillingDetail(nextBilling)
+        return
+      }
+
+      const [nextSummary, boxesBody, nextBilling] = await Promise.all([
+        requestJson<SummaryResponse>(withProject('/v1/panel/summary', currentProjectId), 'panelErrorSummary'),
+        requestJson<{ boxes: PanelBox[] }>(withProject('/v1/panel/boxes', currentProjectId), 'panelErrorBoxes'),
         requestJson<BillingDetailResponse>('/v1/panel/billing', 'panelErrorBilling'),
       ])
-      setBootstrap(nextBootstrap)
       setSummary(nextSummary)
       setBoxes(boxesBody.boxes)
       setBillingDetail(nextBilling)
-      if (nextBootstrap.current_project.id !== selectedProjectId) {
-        setSelectedProjectId(nextBootstrap.current_project.id)
+      if (currentProjectId !== selectedProjectId) {
+        setSelectedProjectId(currentProjectId)
       }
       if (nextBootstrap.initial_api_key) setNewSecret(nextBootstrap.initial_api_key)
     } catch (err) {
@@ -327,8 +341,12 @@ function PanelDashboard() {
   }, [refresh])
 
   useEffect(() => {
-    if (!selectedProjectId || typeof window === 'undefined') return
-    window.localStorage.setItem('sandbank.panel.projectId', selectedProjectId)
+    if (typeof window === 'undefined') return
+    if (selectedProjectId) {
+      window.localStorage.setItem('sandbank.panel.projectId', selectedProjectId)
+    } else {
+      window.localStorage.removeItem('sandbank.panel.projectId')
+    }
   }, [selectedProjectId])
 
   const billing = billingDetail?.billing ?? summary?.billing ?? bootstrap?.billing
@@ -340,6 +358,7 @@ function PanelDashboard() {
     ?? summary?.current_project
     ?? projects.find((project) => project.id === selectedProjectId)
     ?? projects[0]
+  const showProjectOnboarding = Boolean(bootstrap && projects.length === 0)
 
   useEffect(() => {
     if (projectNodes.some((node) => node.node_id === projectNodeId)) return
@@ -547,6 +566,45 @@ function PanelDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (showProjectOnboarding) {
+    return (
+      <div className="min-h-screen">
+        <PanelHeader
+          loading={loading}
+          active={section}
+          projects={projects}
+          projectNodes={projectNodes}
+          currentProject={currentProject}
+          setSelectedProjectId={setSelectedProjectId}
+          projectName={projectName}
+          setProjectName={setProjectName}
+          projectNodeId={projectNodeId}
+          setProjectNodeId={setProjectNodeId}
+          createProject={createProject}
+        />
+        <main className="px-5 py-8 sm:px-8">
+          {error && (
+            <div className="mb-6 border border-red-400/30 bg-red-400/5 px-4 py-3 font-mono text-[0.72rem] text-red-300">
+              {error}
+            </div>
+          )}
+          {newSecret && (
+            <SecretBanner secret={newSecret} onDismiss={() => setNewSecret(null)} />
+          )}
+          <ProjectOnboarding
+            projectName={projectName}
+            setProjectName={setProjectName}
+            projectNodeId={projectNodeId}
+            setProjectNodeId={setProjectNodeId}
+            projectNodes={projectNodes}
+            createProject={createProject}
+            loading={loading}
+          />
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -906,6 +964,116 @@ function PanelNav({ active }: { active: PanelSection }) {
         <PanelLanguageSwitcher className="w-full" />
       </div>
     </aside>
+  )
+}
+
+function ProjectOnboarding({
+  projectName,
+  setProjectName,
+  projectNodeId,
+  setProjectNodeId,
+  projectNodes,
+  createProject,
+  loading,
+}: {
+  projectName: string
+  setProjectName: (name: string) => void
+  projectNodeId: string
+  setProjectNodeId: (nodeId: string) => void
+  projectNodes: ProjectNode[]
+  createProject: () => Promise<boolean>
+  loading: boolean
+}) {
+  const t = useT()
+  const selectedNode = projectNodes.find((node) => node.node_id === projectNodeId) ?? projectNodes[0]
+
+  return (
+    <section className="mx-auto grid max-w-5xl gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+      <div className="min-w-0">
+        <p className="mb-4 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-sand-400">
+          {t('panelOnboardingEyebrow')}
+        </p>
+        <h1 className="max-w-3xl text-[clamp(2.5rem,7vw,5.5rem)] font-normal leading-tight">
+          {t('panelOnboardingTitle')}
+        </h1>
+        <p className="mt-5 max-w-2xl font-mono text-[0.82rem] leading-relaxed text-text-muted">
+          {t('panelOnboardingSubtitle')}
+        </p>
+        <div className="mt-8 grid gap-3 font-mono text-[0.72rem] text-text-muted sm:grid-cols-3">
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
+            <p className="mb-2 text-sand-400">{t('panelProject')}</p>
+            <p>{t('panelOnboardingProjectHint')}</p>
+          </div>
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
+            <p className="mb-2 text-sand-400">{t('panelNavApiKeys')}</p>
+            <p>{t('panelOnboardingApiKeyHint')}</p>
+          </div>
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
+            <p className="mb-2 text-sand-400">{t('panelNavRelay')}</p>
+            <p>{t('panelOnboardingRelayHint')}</p>
+          </div>
+        </div>
+      </div>
+
+      <form
+        className="border border-sand-400/14 bg-surface-raised p-5"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void createProject()
+        }}
+      >
+        <p className="mb-5 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-text-muted">
+          {t('panelCreateProject')}
+        </p>
+        <label className="block">
+          <span className="mb-2 block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+            {t('panelProjectName')}
+          </span>
+          <input
+            value={projectName}
+            onChange={(event) => setProjectName(event.target.value)}
+            placeholder={t('panelOnboardingProjectPlaceholder')}
+            className="w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.78rem] text-text-primary outline-none placeholder:text-text-muted/60 focus:border-sand-400/45"
+            autoFocus
+          />
+        </label>
+
+        <label className="mt-4 block">
+          <span className="mb-2 block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+            {t('panelNodeRegion')}
+          </span>
+          <select
+            value={projectNodeId}
+            onChange={(event) => setProjectNodeId(event.target.value)}
+            className="w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.78rem] text-text-primary outline-none focus:border-sand-400/45"
+          >
+            {projectNodes.map((node) => (
+              <option key={node.node_id} value={node.node_id}>
+                {formatProjectNodeOption(node)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {selectedNode && (
+          <div className="mt-4 border border-sand-400/10 bg-sand-400/[0.025] px-3 py-3 font-mono text-[0.7rem] text-text-muted">
+            <p className="text-text-primary">
+              {selectedNode.flag_emoji ? `${selectedNode.flag_emoji} ` : ''}
+              {selectedNode.server_name}
+            </p>
+            <p className="mt-1">{selectedNode.region}</p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading || !projectName.trim() || projectNodes.length === 0}
+          className="mt-5 w-full border border-sand-400/30 bg-sand-400 px-4 py-3 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-black transition-colors hover:bg-sand-400/90 disabled:cursor-not-allowed disabled:border-sand-400/12 disabled:bg-sand-400/10 disabled:text-text-muted"
+        >
+          {loading ? t('panelSyncing') : t('panelOnboardingCreate')}
+        </button>
+      </form>
+    </section>
   )
 }
 
@@ -2127,6 +2295,8 @@ function getRelayCanvasSize(nodes: RelayCanvasNode[]): { width: number; height: 
 }
 
 function panelApiErrorMessage(message: string, t: ReturnType<typeof useT>): string {
+  if (message === 'Unauthorized') return t('panelApiErrorUnauthorized')
+  if (message === 'Project required') return t('panelApiErrorProjectRequired')
   if (message === 'Project name is required') return t('panelApiErrorProjectNameRequired')
   if (message === 'Project not found') return t('panelApiErrorProjectNotFound')
   if (message === 'Project node not found') return t('panelApiErrorProjectNodeNotFound')
