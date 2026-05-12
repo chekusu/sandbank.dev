@@ -19,6 +19,10 @@ jobs:
         with:
           node-version: 22
 
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec tsc -p workers/api/tsconfig.json
+
       - name: Ensure TYO node DNS
         continue-on-error: true
         env:
@@ -30,6 +34,28 @@ jobs:
           DNS_RECORD_CONTENT: 146.88.129.158
           DNS_RECORD_PROXIED: '0'
         run: node scripts/upsert-cloudflare-dns-record.mjs
+
+      - name: Sync API worker secrets
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          PANEL_AUTH_FORWARDING_SECRET: ${{ secrets.PANEL_AUTH_FORWARDING_SECRET }}
+        run: |
+          set -euo pipefail
+
+          sync_secret() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "$value" ]]; then
+              echo "::notice::${name} is not configured in GitHub; preserving any existing Worker secret."
+              return
+            fi
+            printf '%s' "$value" | pnpm dlx wrangler@4 secret put "$name" --config workers/api/wrangler.toml
+          }
+
+          sync_secret PANEL_AUTH_FORWARDING_SECRET "$PANEL_AUTH_FORWARDING_SECRET"
+          sync_secret CLERK_SECRET_KEY "$CLERK_SECRET_KEY"
 
       - uses: cloudflare/wrangler-action@v3
         with:
