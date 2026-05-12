@@ -31,7 +31,7 @@ jobs:
       - run: pnpm build
         env:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          VITE_SANDBANK_API_BASE: https://cloud.sandbank.dev
+          VITE_SANDBANK_API_BASE: ${{ vars.VITE_SANDBANK_API_BASE || 'https://cloud.sandbank.dev' }}
 
       - uses: cloudflare/wrangler-action@v3
         with:
