@@ -1,0 +1,41 @@
+name: Configure Clerk DNS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configure-clerk-dns:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        record:
+          - name: accounts.sandbank.dev
+            value: accounts.clerk.services
+          - name: clerk.sandbank.dev
+            value: frontend-api.clerk.services
+          - name: clk._domainkey.sandbank.dev
+            value: dkim1.a5atngl0wj4x.clerk.services
+          - name: clk2._domainkey.sandbank.dev
+            value: dkim2.a5atngl0wj4x.clerk.services
+          - name: clkmail.sandbank.dev
+            value: mail.a5atngl0wj4x.clerk.services
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Upsert Clerk CNAME
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ZONE_NAME: sandbank.dev
+          DNS_RECORD_NAME: ${{ matrix.record.name }}
+          DNS_RECORD_TYPE: CNAME
+          DNS_RECORD_CONTENT: ${{ matrix.record.value }}
+          DNS_RECORD_PROXIED: '0'
+        run: node scripts/upsert-cloudflare-dns-record.mjs
