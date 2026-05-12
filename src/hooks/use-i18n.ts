@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import { getLocale, subscribe, t as translate, type TranslationKey } from '@/i18n'
 
 export function useLocale() {
@@ -6,6 +6,6 @@ export function useLocale() {
 }
 
 export function useT() {
-  useLocale() // subscribe to changes
-  return (key: TranslationKey) => translate(key)
+  const locale = useLocale()
+  return useCallback((key: TranslationKey) => translate(key), [locale])
 }

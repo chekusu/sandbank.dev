@@ -1,4 +1,3 @@
-import CustomCursor from '@/components/custom-cursor'
 import AsciiCanvas from '@/components/ascii-canvas'
 import CodeBlock from '@/components/code-block'
 import { useT, useLocale } from '@/hooks/use-i18n'
@@ -39,8 +38,6 @@ export default function Home() {
 
   return (
     <>
-      <CustomCursor />
-
       {/* ── First screen: Hero + Waves ── */}
       <section className="relative h-screen flex flex-col overflow-hidden">
         {/* Nav */}
@@ -59,12 +56,12 @@ export default function Home() {
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.15em] text-text-muted mb-6">
             {t('badge')}
           </p>
-          <h1 className="hero-title text-[clamp(2.5rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.03em] mb-4">
+          <h1 className="hero-title text-[clamp(2.5rem,7vw,5.5rem)] font-normal leading-[1.05] tracking-[-0.01em] mb-4">
             {t('heroTitle1')}
             <br />
             <span className="text-sand-400">{t('heroTitle2')}</span>
           </h1>
-          <p className="font-mono text-[0.8rem] text-text-muted max-w-md leading-relaxed opacity-60 mb-8">
+          <p className="font-mono text-[0.8rem] text-text-muted max-w-md leading-relaxed opacity-80 mb-8">
             {t('heroDesc1')}
             <br />
             {t('heroDesc2')}
@@ -83,7 +80,7 @@ export default function Home() {
         </div>
 
         {/* Scroll hint */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40 z-10">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-70 z-10">
           {t('scroll')}
         </div>
       </section>
@@ -93,7 +90,7 @@ export default function Home() {
 
         {/* Quick Start */}
         <section id="start" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('quickStart')}
           </p>
 
@@ -119,7 +116,7 @@ await provider.destroy(sandbox.id)`}</CodeBlock>
 
         {/* Adapters */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('adapters')}
           </p>
 
@@ -130,25 +127,25 @@ await provider.destroy(sandbox.id)`}</CodeBlock>
                 className={`py-5 ${i < providers.length - 1 ? 'border-b border-sand-400/10' : ''}`}
               >
                 <div className="flex items-baseline justify-between mb-1">
-                  <span className="text-xl font-light tracking-[-0.02em]">{p.name}</span>
+                  <span className="text-xl font-normal">{p.name}</span>
                   <span className="font-mono text-[0.7rem] text-text-muted">{p.cold}</span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-mono text-[0.7rem] text-text-muted opacity-50">{p.arch}</span>
-                  <span className="font-mono text-[0.6rem] text-text-muted opacity-40">{p.caps}</span>
+                  <span className="font-mono text-[0.7rem] text-text-muted opacity-70">{p.arch}</span>
+                  <span className="font-mono text-[0.6rem] text-text-muted opacity-70">{p.caps}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
             {t('adapterNote')}
           </p>
         </section>
 
         {/* Swap Provider */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('providerSwap')}
           </p>
 
@@ -169,7 +166,7 @@ await sandbox.exec('pip install numpy && python -c "import numpy; print(numpy.__
 
         {/* Capabilities */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('capabilityDetection')}
           </p>
 
@@ -191,11 +188,11 @@ if (streamable) {
 
         {/* Service Layer */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('serviceLayer')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             {t('serviceTitle1')}
             <br />
             <span className="text-text-muted">{t('serviceTitle2')}</span>
@@ -209,7 +206,7 @@ if (streamable) {
             <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
               {t('serviceDb9Desc')}
             </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-50">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-70">
               <span>PostgreSQL 17</span>
               <span>pgvector</span>
               <span>pg_cron</span>
@@ -235,18 +232,18 @@ const sandbox = await compute.create({
 
 await sandbox.exec('psql $DATABASE_URL -c "SELECT version()"')`}</CodeBlock>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
             {t('serviceNote')}
           </p>
         </section>
 
         {/* Multi-Agent */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('multiAgent')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             {t('multiTitle1')}
             <br />
             <span className="text-text-muted">{t('multiTitle2')}</span>
@@ -272,7 +269,7 @@ await session.context.set('spec', {
 const results = await session.waitForAll()
 console.log(results) // [{ name: 'architect', status: 'success' }, ...]`}</CodeBlock>
 
-          <div className="flex gap-8 mt-10 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted opacity-50">
+          <div className="flex gap-8 mt-10 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-text-muted opacity-70">
             <span>{t('relay')}</span>
             <span>{t('context')}</span>
             <span>{t('skills')}</span>
@@ -281,7 +278,7 @@ console.log(results) // [{ name: 'architect', status: 'success' }, ...]`}</CodeB
 
         {/* Agent Client */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('insideSandbox')}
           </p>
 
@@ -303,7 +300,7 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
 
         {/* Install */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('packages')}
           </p>
 
@@ -362,10 +359,10 @@ await session.complete({ status: 'success', summary: 'Built 3 endpoints' })`}</C
         {/* Footer */}
         <footer className="py-10 border-t border-sand-400/8">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40">
+            <span className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-70">
               {t('footerMit')}
             </span>
-            <span className="font-mono text-[0.6rem] text-text-muted opacity-30">
+            <span className="font-mono text-[0.6rem] text-text-muted opacity-80">
               v0.2.0
             </span>
           </div>

@@ -23,7 +23,15 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+      - name: Validate panel build environment
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: test -n "$VITE_CLERK_PUBLISHABLE_KEY"
+
       - run: pnpm build
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+          VITE_SANDBANK_API_BASE: https://api.sandbank.dev
 
       - uses: cloudflare/wrangler-action@v3
         with:

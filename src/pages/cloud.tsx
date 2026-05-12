@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import CustomCursor from '@/components/custom-cursor'
 import AsciiCanvas from '@/components/ascii-canvas'
 import CodeBlock from '@/components/code-block'
 import { useT, useLocale } from '@/hooks/use-i18n'
@@ -52,7 +51,7 @@ function StatusBadge() {
 
   useEffect(() => {
     const check = () => {
-      fetch('https://cloud.sandbank.dev/health', { mode: 'cors' })
+      fetch('https://api.sandbank.dev/health', { mode: 'cors' })
         .then(r => r.ok ? setStatus('online') : setStatus('offline'))
         .catch(() => setStatus('offline'))
     }
@@ -67,12 +66,12 @@ function StatusBadge() {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className={`w-1.5 h-1.5 rounded-full ${color} ${status === 'online' ? 'animate-pulse' : ''}`} />
-      <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-60">{label}</span>
+      <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-80">{label}</span>
     </span>
   )
 }
 
-const SKILL_LINE = 'Read https://cloud.sandbank.dev/skill.md and follow instructions'
+const SKILL_LINE = 'Read https://api.sandbank.dev/skill.md and follow instructions'
 
 function MobileMenu({ items }: { items: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false)
@@ -170,8 +169,6 @@ export default function Cloud() {
 
   return (
     <>
-      <CustomCursor />
-
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
         {/* Nav */}
@@ -194,12 +191,12 @@ export default function Cloud() {
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.15em] text-text-muted mb-6">
             {t('cloudBadge')}
           </p>
-          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.03em] mb-4">
+          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-normal leading-[1.05] tracking-[-0.01em] mb-4">
             Sandbank
             <br />
             <span className="text-sand-400">Cloud</span>
           </h1>
-          <p className="font-mono text-[0.8rem] text-text-muted max-w-lg leading-relaxed opacity-60 mb-8">
+          <p className="font-mono text-[0.8rem] text-text-muted max-w-lg leading-relaxed opacity-80 mb-8">
             {t('cloudHeroDesc1')}
             <br />
             {t('cloudHeroDesc2')}
@@ -223,12 +220,12 @@ export default function Cloud() {
           <div className="flex items-center gap-8">
             <div className="text-center">
               <span className="block font-mono text-2xl text-sand-400 tracking-tight">{t('cloudSpeed')}</span>
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-50">{t('cloudSpeedLabel')}</span>
+              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-70">{t('cloudSpeedLabel')}</span>
             </div>
             <div className="w-px h-8 bg-sand-400/20" />
             <div className="text-center">
               <span className="block font-mono text-2xl text-sand-400 tracking-tight">$0.02</span>
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-50">{t('cloudPerSandbox')}</span>
+              <span className="font-mono text-[0.6rem] uppercase tracking-[0.1em] text-text-muted opacity-70">{t('cloudPerSandbox')}</span>
             </div>
           </div>
         </div>
@@ -239,7 +236,7 @@ export default function Cloud() {
         </div>
 
         {/* Scroll hint */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40 z-10">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-70 z-10">
           {t('scroll')}
         </div>
       </section>
@@ -249,7 +246,7 @@ export default function Cloud() {
 
         {/* ── AI Agents ── */}
         <section id="agent" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudAgent')}
           </p>
 
@@ -269,7 +266,7 @@ export default function Cloud() {
                 {SKILL_LINE}
               </code>
             </div>
-            <p className="font-mono text-[0.7rem] text-text-muted opacity-60 leading-relaxed">
+            <p className="font-mono text-[0.7rem] text-text-muted opacity-80 leading-relaxed">
               {t('cloudAgentNote')}
             </p>
           </div>
@@ -277,11 +274,11 @@ export default function Cloud() {
 
         {/* ── Pricing ── */}
         <section id="pricing" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('cloudPricing')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             <span className="text-sand-400">{t('cloudPricingTitle1')}</span>
             <br />
             <span className="text-text-muted">{t('cloudPricingTitle2')}</span>
@@ -290,17 +287,17 @@ export default function Cloud() {
           <div className="space-y-0 mb-8">
             <div className="border-t border-sand-400/10 py-5 flex items-baseline justify-between">
               <div>
-                <span className="text-lg font-light">{t('cloudPricingCreate')}</span>
+                <span className="text-lg font-normal">{t('cloudPricingCreate')}</span>
                 <span className="font-mono text-[0.65rem] text-text-muted ml-3">{t('cloudPricingIncludes')}</span>
               </div>
               <span className="font-mono text-xl text-sand-400">{t('cloudPricingCreatePrice')}</span>
             </div>
             <div className="border-t border-sand-400/10 py-5 flex items-baseline justify-between">
-              <span className="text-lg font-light">{t('cloudPricingKeep')}</span>
+              <span className="text-lg font-normal">{t('cloudPricingKeep')}</span>
               <span className="font-mono text-xl text-sand-400">{t('cloudPricingKeepPrice')}</span>
             </div>
             <div className="border-t border-b border-sand-400/10 py-5 flex items-baseline justify-between">
-              <span className="text-lg font-light">{t('cloudPricingExec')}</span>
+              <span className="text-lg font-normal">{t('cloudPricingExec')}</span>
               <span className="font-mono text-xl text-emerald-400/70">{t('cloudPricingFree')}</span>
             </div>
           </div>
@@ -309,14 +306,14 @@ export default function Cloud() {
             {t('cloudPricingDesc')}
           </p>
 
-          <p className="font-mono text-[0.6rem] text-text-muted opacity-40">
+          <p className="font-mono text-[0.6rem] text-text-muted opacity-70">
             {t('cloudPricingProtocol')}
           </p>
         </section>
 
         {/* ── Resource Limits ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudLimits')}
           </p>
 
@@ -339,14 +336,14 @@ export default function Cloud() {
             </div>
           </div>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
             {t('cloudLimitsNote')}
           </p>
         </section>
 
         {/* ── Default Image ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudImage')}
           </p>
 
@@ -371,10 +368,10 @@ export default function Cloud() {
                 <span className="font-mono text-[0.75rem] text-text-muted">{t('cloudImageWeb')}</span>
               </div>
             </div>
-            <p className="font-mono text-[0.6rem] text-text-muted opacity-30 mt-6 leading-relaxed">
+            <p className="font-mono text-[0.6rem] text-text-muted opacity-80 mt-6 leading-relaxed">
               {t('cloudImageDetail')}
             </p>
-            <p className="font-mono text-[0.6rem] text-text-muted opacity-30 mt-2">
+            <p className="font-mono text-[0.6rem] text-text-muted opacity-80 mt-2">
               {t('cloudImageNote')}
             </p>
           </div>
@@ -382,11 +379,11 @@ export default function Cloud() {
 
         {/* ── Browser Automation ── */}
         <section id="browser" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('cloudBrowser')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             <span className="text-sand-400">{t('cloudBrowserTitle1')}</span>
             <br />
             <span className="text-text-muted">{t('cloudBrowserTitle2')}</span>
@@ -413,7 +410,7 @@ export default function Cloud() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="font-mono text-[0.6rem] text-text-muted/40">–</span>
-                  <span className="font-mono text-[0.65rem] text-text-muted opacity-50">{t('cloudBrowserLpLimit')}</span>
+                  <span className="font-mono text-[0.65rem] text-text-muted opacity-70">{t('cloudBrowserLpLimit')}</span>
                 </div>
               </div>
             </div>
@@ -462,18 +459,18 @@ browser screenshot               # visual confirmation
 browser save logged-in           # snapshot VM state
 browser destroy                  # back to Lightpanda`}</CodeBlock>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
             {t('cloudBrowserNote')}
           </p>
         </section>
 
         {/* ── DB9 ── */}
         <section id="db9" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('cloudDb9')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             <span className="text-sand-400">{t('cloudDb9Title1')}</span>
             <br />
             <span className="text-text-muted">{t('cloudDb9Title2')}</span>
@@ -487,7 +484,7 @@ browser destroy                  # back to Lightpanda`}</CodeBlock>
             <p className="text-[1rem] text-text-muted leading-relaxed mt-4 mb-6">
               {t('cloudDb9Desc')}
             </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-50">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[0.65rem] text-text-muted opacity-70">
               <span>PostgreSQL 17</span>
               <span>pgvector</span>
               <span>pg_cron</span>
@@ -516,14 +513,14 @@ db9 branch create myapp --name experiment
 # Or connect directly with psql
 psql $DATABASE_URL -c "SELECT * FROM users"`}</CodeBlock>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
             {t('cloudDb9Note')}
           </p>
         </section>
 
         {/* ── Features ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudFeatures')}
           </p>
 
@@ -542,13 +539,13 @@ psql $DATABASE_URL -c "SELECT * FROM users"`}</CodeBlock>
 
         {/* ── Quick Start ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('quickStart')}
           </p>
 
           <CodeBlock filename="create.sh" lang="bash">{`# Create a sandbox — x402 payment is handled automatically
 # The server returns 402 with payment details, your x402 client pays and retries
-curl -X POST https://cloud.sandbank.dev/v1/boxes \\
+curl -X POST https://api.sandbank.dev/v1/boxes \\
   -H "Content-Type: application/json" \\
   -d '{"image": "codebox", "cpu": 2, "memory_mb": 1024}'
 
@@ -557,7 +554,7 @@ curl -X POST https://cloud.sandbank.dev/v1/boxes \\
           <div className="h-8" />
 
           <CodeBlock filename="exec.sh" lang="bash">{`# Execute a command (free after sandbox is created)
-curl -X POST https://cloud.sandbank.dev/v1/boxes/aQscOYX87tSq/exec \\
+curl -X POST https://api.sandbank.dev/v1/boxes/aQscOYX87tSq/exec \\
   -H "Content-Type: application/json" \\
   -d '{"cmd": ["echo", "Hello from the sandbox"]}'
 
@@ -566,12 +563,12 @@ curl -X POST https://cloud.sandbank.dev/v1/boxes/aQscOYX87tSq/exec \\
           <div className="h-8" />
 
           <CodeBlock filename="destroy.sh" lang="bash">{`# Destroy when done (free)
-curl -X DELETE https://cloud.sandbank.dev/v1/boxes/aQscOYX87tSq`}</CodeBlock>
+curl -X DELETE https://api.sandbank.dev/v1/boxes/aQscOYX87tSq`}</CodeBlock>
         </section>
 
         {/* ── With SDK ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudSdk')}
           </p>
 
@@ -686,11 +683,11 @@ TENANT_BOX_LIFECYCLE_WEBHOOK_TIMEOUT_MS=2000`}</CodeBlock>
 
         {/* ── API Reference ── */}
         <section id="api" className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-4 opacity-70">
             {t('cloudApiRef')}
           </p>
 
-          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-light leading-[1.1] tracking-[-0.02em] mb-12">
+          <h2 className="text-[clamp(1.5rem,4vw,2.8rem)] font-normal leading-[1.1] tracking-[-0.01em] mb-12">
             {t('cloudApiTitle1')}
             <br />
             <span className="text-text-muted">{t('cloudApiTitle2')}</span>
@@ -715,40 +712,37 @@ TENANT_BOX_LIFECYCLE_WEBHOOK_TIMEOUT_MS=2000`}</CodeBlock>
                     <span className="font-mono text-[0.6rem] text-sand-400/60">{ep.price}</span>
                   )}
                 </div>
-                <p className="font-mono text-[0.65rem] text-text-muted opacity-50 ml-[3.75rem] mt-1">{ep.desc}</p>
+                <p className="font-mono text-[0.65rem] text-text-muted opacity-70 ml-[3.75rem] mt-1">{ep.desc}</p>
               </div>
             ))}
           </div>
 
-          <p className="font-mono text-[0.65rem] text-text-muted opacity-40 mt-8">
-            {t('cloudBaseUrl')}: https://cloud.sandbank.dev
+          <p className="font-mono text-[0.65rem] text-text-muted opacity-70 mt-8">
+            {t('cloudBaseUrl')}: https://api.sandbank.dev
           </p>
         </section>
 
         {/* ── Port Forwarding ── */}
         <section className="py-24">
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-50">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted mb-12 opacity-70">
             {t('cloudPorts')}
           </p>
 
           <CodeBlock filename="ports.sh" lang="bash">{`# Create sandbox with port forwarding
-curl -X POST https://cloud.sandbank.dev/v1/boxes \\
+curl -X POST https://api.sandbank.dev/v1/boxes \\
   -H "Content-Type: application/json" \\
   -d '{"image": "codebox", "ports": [[0, 8080], [0, 7681]]}'
 
 # → {"id": "abc", "ports": {"8080": 10042, "7681": 10043}, ...}
 
 # Access guest port 8080 via HTTP proxy
-curl https://cloud.sandbank.dev/v1/boxes/abc/proxy/8080/
-
-# Or connect directly to host port
-curl http://cloud.sandbank.dev:10042/`}</CodeBlock>
+curl https://api.sandbank.dev/v1/boxes/abc/proxy/8080/`}</CodeBlock>
         </section>
 
         {/* Footer */}
         <footer className="py-10 border-t border-sand-400/8">
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-4 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-40">
+            <span className="inline-flex items-center gap-4 font-mono text-[0.6rem] uppercase tracking-[0.15em] text-text-muted opacity-70">
               <span>sandbank cloud · {t('cloudFooter')}</span>
               <StatusBadge />
             </span>
