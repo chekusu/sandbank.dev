@@ -988,41 +988,41 @@ function ProjectOnboarding({
   const selectedNode = projectNodes.find((node) => node.node_id === projectNodeId) ?? projectNodes[0]
 
   return (
-    <section className="mx-auto grid max-w-5xl gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+    <section className="mx-auto grid max-w-4xl gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
       <div className="min-w-0">
-        <p className="mb-4 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-sand-400">
+        <p className="mb-3 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-sand-400">
           {t('panelOnboardingEyebrow')}
         </p>
-        <h1 className="max-w-3xl text-[clamp(2.5rem,7vw,5.5rem)] font-normal leading-tight">
+        <h1 className="max-w-2xl text-[clamp(1.75rem,3vw,2.45rem)] font-medium leading-[1.18]">
           {t('panelOnboardingTitle')}
         </h1>
-        <p className="mt-5 max-w-2xl font-mono text-[0.82rem] leading-relaxed text-text-muted">
+        <p className="mt-3 max-w-xl font-mono text-[0.76rem] leading-relaxed text-text-muted">
           {t('panelOnboardingSubtitle')}
         </p>
-        <div className="mt-8 grid gap-3 font-mono text-[0.72rem] text-text-muted sm:grid-cols-3">
-          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
-            <p className="mb-2 text-sand-400">{t('panelProject')}</p>
+        <div className="mt-6 grid gap-2 font-mono text-[0.68rem] leading-relaxed text-text-muted sm:grid-cols-3">
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-3">
+            <p className="mb-1.5 text-sand-400">{t('panelProject')}</p>
             <p>{t('panelOnboardingProjectHint')}</p>
           </div>
-          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
-            <p className="mb-2 text-sand-400">{t('panelNavApiKeys')}</p>
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-3">
+            <p className="mb-1.5 text-sand-400">{t('panelNavApiKeys')}</p>
             <p>{t('panelOnboardingApiKeyHint')}</p>
           </div>
-          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-4">
-            <p className="mb-2 text-sand-400">{t('panelNavRelay')}</p>
+          <div className="border border-sand-400/12 bg-sand-400/[0.025] p-3">
+            <p className="mb-1.5 text-sand-400">{t('panelNavRelay')}</p>
             <p>{t('panelOnboardingRelayHint')}</p>
           </div>
         </div>
       </div>
 
       <form
-        className="border border-sand-400/14 bg-surface-raised p-5"
+        className="border border-sand-400/14 bg-surface-raised p-4"
         onSubmit={(event) => {
           event.preventDefault()
           void createProject()
         }}
       >
-        <p className="mb-5 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-text-muted">
+        <p className="mb-4 font-mono text-[0.64rem] uppercase tracking-[0.1em] text-text-muted">
           {t('panelCreateProject')}
         </p>
         <label className="block">
