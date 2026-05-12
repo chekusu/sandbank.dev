@@ -28,7 +28,7 @@ jobs:
           DNS_RECORD_NAME: tyo-1.node.sandbank.dev
           DNS_RECORD_TYPE: A
           DNS_RECORD_CONTENT: 146.88.129.158
-          DNS_RECORD_PROXIED: '1'
+          DNS_RECORD_PROXIED: '0'
         run: node scripts/upsert-cloudflare-dns-record.mjs
 
       - uses: cloudflare/wrangler-action@v3
