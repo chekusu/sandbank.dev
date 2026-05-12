@@ -1,0 +1,38 @@
+name: Deploy API Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/api/**'
+      - 'scripts/upsert-cloudflare-dns-record.mjs'
+      - '.github/workflows/deploy-api-worker.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-api-worker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ensure TYO node DNS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_NAME: sandbank.dev
+          DNS_RECORD_NAME: tyo-1.node.sandbank.dev
+          DNS_RECORD_TYPE: A
+          DNS_RECORD_CONTENT: 146.88.129.158
+          DNS_RECORD_PROXIED: '1'
+        run: node scripts/upsert-cloudflare-dns-record.mjs
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config workers/api/wrangler.toml

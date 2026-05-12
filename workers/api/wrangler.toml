@@ -1,0 +1,13 @@
+name = "sandbank-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-12"
+workers_dev = true
+routes = [
+  { pattern = "api.sandbank.dev", custom_domain = true }
+]
+
+[vars]
+DEFAULT_NODE_ID = "tyo-1"
+DEFAULT_NODE_ORIGIN = "https://tyo-1.node.sandbank.dev"
+FALLBACK_NODE_ORIGIN = "https://cloud.sandbank.dev"
+NODE_ORIGINS_JSON = "{\"tyo-1\":\"https://tyo-1.node.sandbank.dev\"}"
