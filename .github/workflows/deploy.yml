@@ -5,8 +5,16 @@ on:
     branches: [main]
 
 jobs:
+  sandbank-preflight:
+    permissions:
+      contents: read
+      statuses: read
+    uses: chekusu/cloud.sandbank.dev/.github/workflows/sandbank-deploy-preflight.yml@main
+
   deploy:
-    runs-on: ubuntu-latest
+    needs: sandbank-preflight
+    if: needs.sandbank-preflight.outputs.should_deploy == 'true'
+    runs-on: [self-hosted, tyo-node]
     permissions:
       contents: read
       deployments: write
