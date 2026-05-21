@@ -5,7 +5,7 @@ on:
 
 jobs:
   deploy-api-worker:
-    runs-on: [self-hosted, tyo-node]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
