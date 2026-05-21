@@ -14,8 +14,10 @@ import { useLocale, useT } from '@/hooks/use-i18n'
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
 const API_BASE = (import.meta.env.VITE_SANDBANK_API_BASE as string | undefined) || 'https://api.sandbank.dev'
 const PANEL_ROOT = '/panel'
+const TENANT_WEBHOOK_EVENTS = ['box.error', 'box.terminated', 'box.status_changed'] as const
 
-type PanelSection = 'overview' | 'boxes' | 'relay' | 'billing' | 'api-keys' | 'project-settings'
+type PanelSection = 'overview' | 'boxes' | 'relay' | 'billing' | 'api-keys' | 'webhooks' | 'project-settings'
+type TenantWebhookEvent = (typeof TENANT_WEBHOOK_EVENTS)[number]
 
 interface BootstrapResponse {
   tenant: { id: string; name: string; slug: string; created_at?: string }
@@ -51,6 +53,33 @@ interface BillingDetailResponse {
     box_create_cents: number
     box_keep_cents: number
   }
+}
+
+interface TenantWebhookResponse {
+  webhook: TenantWebhook | null
+}
+
+interface TenantWebhook {
+  tenant_id: string
+  url: string
+  events: TenantWebhookEvent[]
+  timeout_ms: number
+  enabled: boolean
+  has_secret: boolean
+  has_token: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface TenantWebhookSavePayload {
+  url: string
+  enabled: boolean
+  events: TenantWebhookEvent[]
+  timeout_ms: number
+  secret?: string
+  token?: string
+  clear_secret?: boolean
+  clear_token?: boolean
 }
 
 interface Project {
@@ -259,6 +288,7 @@ function PanelDashboard() {
   const [summary, setSummary] = useState<SummaryResponse | null>(null)
   const [boxes, setBoxes] = useState<PanelBox[]>([])
   const [billingDetail, setBillingDetail] = useState<BillingDetailResponse | null>(null)
+  const [webhook, setWebhook] = useState<TenantWebhook | null>(null)
   const [newSecret, setNewSecret] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
@@ -312,19 +342,25 @@ function PanelDashboard() {
         setSummary(null)
         setBoxes([])
         setSelectedProjectId(null)
-        const nextBilling = await requestJson<BillingDetailResponse>('/v1/panel/billing', 'panelErrorBilling')
+        const [nextBilling, nextWebhook] = await Promise.all([
+          requestJson<BillingDetailResponse>('/v1/panel/billing', 'panelErrorBilling'),
+          requestJson<TenantWebhookResponse>('/v1/panel/webhook', 'panelErrorWebhook'),
+        ])
         setBillingDetail(nextBilling)
+        setWebhook(nextWebhook.webhook)
         return
       }
 
-      const [nextSummary, boxesBody, nextBilling] = await Promise.all([
+      const [nextSummary, boxesBody, nextBilling, nextWebhook] = await Promise.all([
         requestJson<SummaryResponse>(withProject('/v1/panel/summary', currentProjectId), 'panelErrorSummary'),
         requestJson<{ boxes: PanelBox[] }>(withProject('/v1/panel/boxes', currentProjectId), 'panelErrorBoxes'),
         requestJson<BillingDetailResponse>('/v1/panel/billing', 'panelErrorBilling'),
+        requestJson<TenantWebhookResponse>('/v1/panel/webhook', 'panelErrorWebhook'),
       ])
       setSummary(nextSummary)
       setBoxes(boxesBody.boxes)
       setBillingDetail(nextBilling)
+      setWebhook(nextWebhook.webhook)
       if (currentProjectId !== selectedProjectId) {
         setSelectedProjectId(currentProjectId)
       }
@@ -568,6 +604,40 @@ function PanelDashboard() {
     }
   }
 
+  const saveWebhook = async (payload: TenantWebhookSavePayload) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await requestJson<TenantWebhookResponse>('/v1/panel/webhook', 'panelErrorWebhook', {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      })
+      setWebhook(data.webhook)
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteWebhook = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await authedFetch('/v1/panel/webhook', { method: 'DELETE' })
+      if (!res.ok) throw new Error(`${t('panelErrorWebhook')}: ${res.status}`)
+      setWebhook(null)
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (showProjectOnboarding) {
     return (
       <div className="min-h-screen">
@@ -667,6 +737,14 @@ function PanelDashboard() {
               createApiKey={createApiKey}
               revokeApiKey={revokeApiKey}
               locale={locale}
+            />
+          )}
+          {section === 'webhooks' && (
+            <WebhooksPage
+              webhook={webhook}
+              loading={loading}
+              saveWebhook={saveWebhook}
+              deleteWebhook={deleteWebhook}
             />
           )}
           {section === 'project-settings' && (
@@ -823,6 +901,15 @@ function KeyIcon({ className }: { className?: string }) {
   )
 }
 
+function WebhookIcon({ className }: { className?: string }) {
+  return (
+    <PanelSvgIcon className={className}>
+      <path d="M18 16.5a3.5 3.5 0 1 0 3.5 3.5M6 7.5a3.5 3.5 0 1 0-3.5-3.5M14.5 4a3.5 3.5 0 1 0 3.5 3.5" />
+      <path d="M8.5 5.5h3M15.6 10.8l-2.2 3.8M8.4 10.8l2.2 3.8" />
+    </PanelSvgIcon>
+  )
+}
+
 function SettingsIcon({ className }: { className?: string }) {
   return (
     <PanelSvgIcon className={className}>
@@ -936,6 +1023,7 @@ function PanelNav({ active }: { active: PanelSection }) {
     { key: 'boxes' as const, path: '/panel/boxes', label: t('panelNavBoxes'), icon: BoxIcon },
     { key: 'relay' as const, path: '/panel/relay', label: t('panelNavRelay'), icon: RelayIcon },
     { key: 'api-keys' as const, path: '/panel/api-keys', label: t('panelNavApiKeys'), icon: KeyIcon },
+    { key: 'webhooks' as const, path: '/panel/webhooks', label: t('panelNavWebhooks'), icon: WebhookIcon },
     { key: 'project-settings' as const, path: '/panel/project-settings', label: t('panelNavProjectSettings'), icon: SettingsIcon },
   ]), [t])
 
@@ -1238,6 +1326,7 @@ function PageHeading({ section, tenantName }: { section: PanelSection; tenantNam
     relay: [t('panelRelayTitle'), t('panelRelaySubtitle')],
     billing: [t('panelBillingTitle'), t('panelBillingSubtitle')],
     'api-keys': [t('panelApiKeysTitle'), t('panelApiKeysSubtitle')],
+    webhooks: [t('panelWebhooksTitle'), t('panelWebhooksSubtitle')],
     'project-settings': [t('panelProjectSettingsTitle'), t('panelProjectSettingsSubtitle')],
   } satisfies Record<PanelSection, [string, string]>
 
@@ -1446,6 +1535,211 @@ function ApiKeysPage({ keys, currentProject, createApiKey, revokeApiKey, locale 
         <button onClick={createApiKey} className="panel-button-primary">{t('panelIssueKey')}</button>
       </div>
     </section>
+  )
+}
+
+function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
+  webhook: TenantWebhook | null
+  loading: boolean
+  saveWebhook: (payload: TenantWebhookSavePayload) => Promise<boolean>
+  deleteWebhook: () => Promise<boolean>
+}) {
+  const t = useT()
+  const [url, setUrl] = useState(webhook?.url ?? '')
+  const [enabled, setEnabled] = useState(webhook?.enabled ?? true)
+  const [events, setEvents] = useState<TenantWebhookEvent[]>(webhook?.events ?? [...TENANT_WEBHOOK_EVENTS])
+  const [timeoutMs, setTimeoutMs] = useState(webhook?.timeout_ms ?? 2000)
+  const [secret, setSecret] = useState('')
+  const [token, setToken] = useState('')
+  const [clearSecret, setClearSecret] = useState(false)
+  const [clearToken, setClearToken] = useState(false)
+
+  useEffect(() => {
+    setUrl(webhook?.url ?? '')
+    setEnabled(webhook?.enabled ?? true)
+    setEvents(webhook?.events ?? [...TENANT_WEBHOOK_EVENTS])
+    setTimeoutMs(webhook?.timeout_ms ?? 2000)
+    setSecret('')
+    setToken('')
+    setClearSecret(false)
+    setClearToken(false)
+  }, [webhook])
+
+  const toggleEvent = (eventName: TenantWebhookEvent) => {
+    setEvents((current) => current.includes(eventName)
+      ? current.filter((event) => event !== eventName)
+      : [...current, eventName])
+  }
+
+  const submit = async () => {
+    const payload: TenantWebhookSavePayload = {
+      url: url.trim(),
+      enabled,
+      events,
+      timeout_ms: timeoutMs,
+      clear_secret: clearSecret,
+      clear_token: clearToken,
+    }
+    if (secret.trim()) payload.secret = secret.trim()
+    if (token.trim()) payload.token = token.trim()
+    const saved = await saveWebhook(payload)
+    if (saved) {
+      setSecret('')
+      setToken('')
+      setClearSecret(false)
+      setClearToken(false)
+    }
+  }
+
+  const activeCount = events.length
+  const secretDetail = webhook?.has_secret && !clearSecret ? t('panelWebhookConfigured') : t('panelWebhookNotConfigured')
+  const tokenDetail = webhook?.has_token && !clearToken ? t('panelWebhookConfigured') : t('panelWebhookNotConfigured')
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <section className="border border-sand-400/12 bg-sand-400/[0.025]">
+        <PanelTitle
+          title={t('panelWebhooksTitle')}
+          detail={webhook?.enabled ? t('panelEnabled') : t('panelDisabled')}
+        />
+        <form
+          className="space-y-5 p-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void submit()
+          }}
+        >
+          <label className="flex items-center justify-between gap-3 font-mono text-[0.74rem] text-text-secondary">
+            {t('panelWebhookEnableDelivery')}
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(event) => setEnabled(event.target.checked)}
+              className="h-4 w-4 accent-[#D4A853]"
+            />
+          </label>
+
+          <label className="block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+            {t('panelWebhookUrl')}
+            <input
+              type="url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://example.com/webhooks/sandbank"
+              className="mt-2 w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.76rem] normal-case text-text-primary outline-none placeholder:text-text-muted/50 focus:border-sand-400/45"
+            />
+          </label>
+
+          <div>
+            <p className="mb-2 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+              {t('panelWebhookEvents')}
+            </p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {TENANT_WEBHOOK_EVENTS.map((eventName) => (
+                <label
+                  key={eventName}
+                  className={`flex items-center justify-between gap-3 border px-3 py-3 font-mono text-[0.7rem] transition-colors ${
+                    events.includes(eventName)
+                      ? 'border-sand-400/30 bg-sand-400/[0.07] text-sand-400'
+                      : 'border-sand-400/12 bg-surface text-text-muted'
+                  }`}
+                >
+                  <span>{tenantWebhookEventLabel(eventName, t)}</span>
+                  <input
+                    type="checkbox"
+                    checked={events.includes(eventName)}
+                    onChange={() => toggleEvent(eventName)}
+                    className="h-4 w-4 accent-[#D4A853]"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <label className="block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+            {t('panelWebhookTimeout')}
+            <input
+              type="number"
+              min="100"
+              max="30000"
+              step="100"
+              value={timeoutMs}
+              onChange={(event) => setTimeoutMs(Number(event.target.value))}
+              className="mt-2 w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.76rem] text-text-primary outline-none focus:border-sand-400/45"
+            />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+              {t('panelWebhookSecret')}
+              <input
+                value={secret}
+                onChange={(event) => setSecret(event.target.value)}
+                placeholder={webhook?.has_secret ? t('panelWebhookSecretPlaceholder') : ''}
+                className="mt-2 w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.76rem] normal-case text-text-primary outline-none placeholder:text-text-muted/50 focus:border-sand-400/45"
+              />
+            </label>
+            <label className="block font-mono text-[0.68rem] uppercase tracking-[0.1em] text-text-muted">
+              {t('panelWebhookToken')}
+              <input
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                placeholder={webhook?.has_token ? t('panelWebhookTokenPlaceholder') : ''}
+                className="mt-2 w-full border border-sand-400/14 bg-surface px-3 py-3 font-mono text-[0.76rem] normal-case text-text-primary outline-none placeholder:text-text-muted/50 focus:border-sand-400/45"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-wrap gap-4 font-mono text-[0.68rem] text-text-muted">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={clearSecret}
+                disabled={!webhook?.has_secret}
+                onChange={(event) => setClearSecret(event.target.checked)}
+                className="h-4 w-4 accent-[#D4A853]"
+              />
+              {t('panelWebhookClearSecret')}
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={clearToken}
+                disabled={!webhook?.has_token}
+                onChange={(event) => setClearToken(event.target.checked)}
+                className="h-4 w-4 accent-[#D4A853]"
+              />
+              {t('panelWebhookClearToken')}
+            </label>
+          </div>
+
+          <div className="flex flex-wrap gap-3 border-t border-sand-400/10 pt-4">
+            <button type="submit" className="panel-button-primary" disabled={loading || !url.trim() || activeCount === 0}>
+              {t('panelWebhookSave')}
+            </button>
+            <button type="button" className="panel-button-secondary" disabled={loading || !webhook} onClick={() => void deleteWebhook()}>
+              {t('panelWebhookDelete')}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="border border-sand-400/12 bg-sand-400/[0.025]">
+        <PanelTitle
+          title={t('panelWebhookStatus')}
+          detail={webhook ? `${activeCount} ${t('panelWebhookEvents')}` : t('panelNoWebhook')}
+        />
+        <div className="grid gap-px bg-sand-400/10 font-mono text-[0.74rem]">
+          <InfoRow label={t('panelStatus')} value={webhook?.enabled ? t('panelEnabled') : t('panelDisabled')} />
+          <InfoRow label={t('panelWebhookSecret')} value={secretDetail} />
+          <InfoRow label={t('panelWebhookToken')} value={tokenDetail} />
+          <InfoRow label={t('panelWebhookTimeout')} value={`${timeoutMs || 0} ms`} />
+        </div>
+        <p className="border-t border-sand-400/10 px-4 py-3 font-mono text-[0.68rem] leading-relaxed text-text-muted">
+          {t('panelWebhookDeliveryHint')}
+        </p>
+      </section>
+    </div>
   )
 }
 
@@ -2304,6 +2598,9 @@ function panelApiErrorMessage(message: string, t: ReturnType<typeof useT>): stri
   if (message === 'Project still has boxes') return t('panelApiErrorProjectHasBoxes')
   if (message === 'Stripe is not configured') return t('panelApiErrorStripeNotConfigured')
   if (message === 'Card required') return t('panelApiErrorCardRequired')
+  if (message === 'Webhook URL is invalid') return t('panelApiErrorWebhookUrlInvalid')
+  if (message === 'Webhook events are required') return t('panelApiErrorWebhookEventsRequired')
+  if (message === 'Webhook timeout is invalid') return t('panelApiErrorWebhookTimeoutInvalid')
   return message
 }
 
@@ -2337,11 +2634,18 @@ function topupStatusLabel(status: string, t: ReturnType<typeof useT>): string {
   return status
 }
 
+function tenantWebhookEventLabel(event: TenantWebhookEvent, t: ReturnType<typeof useT>): string {
+  if (event === 'box.error') return t('panelWebhookEventError')
+  if (event === 'box.terminated') return t('panelWebhookEventTerminated')
+  return t('panelWebhookEventStatusChanged')
+}
+
 function sectionFromPath(pathname: string): PanelSection {
   if (pathname === '/panel/boxes') return 'boxes'
   if (pathname === '/panel/relay') return 'relay'
   if (pathname === '/panel/billing') return 'billing'
   if (pathname === '/panel/api-keys') return 'api-keys'
+  if (pathname === '/panel/webhooks') return 'webhooks'
   if (pathname === '/panel/project-settings') return 'project-settings'
   return 'overview'
 }
