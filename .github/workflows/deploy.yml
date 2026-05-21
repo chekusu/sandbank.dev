@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: read
       statuses: read
-    uses: chekusu/cloud.sandbank.dev/.github/workflows/sandbank-deploy-preflight.yml@main
+    uses: ./.github/workflows/sandbank-deploy-preflight.yml
 
   deploy:
     needs: sandbank-preflight
