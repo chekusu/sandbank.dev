@@ -100,3 +100,4 @@ jobs:
             fi
 
             sleep "${POLL_INTERVAL_SECONDS}"
+          done
