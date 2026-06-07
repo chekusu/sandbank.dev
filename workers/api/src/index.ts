@@ -9,11 +9,13 @@ interface Env {
   FALLBACK_NODE_ORIGIN?: string
   NODE_ORIGINS_JSON?: string
   PANEL_AUTH_FORWARDING_SECRET?: string
+  SCHEDULER_ORIGIN?: string
 }
 
 type NodeTarget = {
   id: string
   origin: string
+  kind?: 'node' | 'scheduler'
 }
 
 type PanelAuth = {
@@ -33,6 +35,7 @@ export default {
     const url = new URL(request.url)
     const nodes = readNodeOrigins(env)
     const selectedNode = selectNode(url, request, env, nodes)
+    const target = selectProxyTarget(url, request, env, selectedNode)
 
     if (url.pathname === '/__worker/health') {
       return json({
@@ -40,16 +43,33 @@ export default {
         service: 'sandbank-api-worker',
         node_id: selectedNode.id,
         node_origin: selectedNode.origin,
+        proxy_target_id: target.id,
+        proxy_target_origin: target.origin,
+        proxy_target_kind: target.kind || 'node',
+        scheduler_origin: normalizeOriginWithPath(env.SCHEDULER_ORIGIN || ''),
+        node_count: nodes.length,
+        nodes,
         clerk_jwt_key_configured: Boolean(env.CLERK_JWT_KEY?.trim()),
         clerk_secret_configured: Boolean(env.CLERK_SECRET_KEY?.trim()),
         panel_auth_forwarding_secret_configured: Boolean(env.PANEL_AUTH_FORWARDING_SECRET?.trim()),
       })
     }
 
+    if (url.pathname === '/__worker/nodes') {
+      return json({
+        ok: true,
+        default_node_id: env.DEFAULT_NODE_ID || DEFAULT_NODE_ID,
+        scheduler_origin: normalizeOriginWithPath(env.SCHEDULER_ORIGIN || ''),
+        box_api_target: selectProxyTarget(new URL('/v1/boxes', url), request, env, selectedNode),
+        selected_node: selectedNode,
+        nodes,
+      })
+    }
+
     const panelAuth = await resolvePanelAuth(request, url, env)
     if (panelAuth instanceof Response) return panelAuth
 
-    return proxyToNode(request, url, selectedNode, env, panelAuth)
+    return proxyToNode(request, url, target, env, panelAuth)
   },
 }
 
@@ -96,6 +116,7 @@ async function buildNodeRequest(
   upstream.protocol = nodeOrigin.protocol
   upstream.hostname = nodeOrigin.hostname
   upstream.port = nodeOrigin.port
+  upstream.pathname = joinOriginPath(nodeOrigin.pathname, originalUrl.pathname)
 
   const headers = new Headers(request.headers)
   stripPanelAuthHeaders(headers)
@@ -292,10 +313,40 @@ function selectNode(url: URL, request: Request, env: Env, nodes: NodeTarget[]): 
   return nodes.find((node) => node.id === requestedNodeId) || nodes[0]!
 }
 
+function selectProxyTarget(url: URL, request: Request, env: Env, selectedNode: NodeTarget): NodeTarget {
+  const schedulerOrigin = normalizeOriginWithPath(env.SCHEDULER_ORIGIN || '')
+  if (schedulerOrigin && isBoxControlPath(url.pathname) && !hasExplicitNodeOverride(url, request)) {
+    return {
+      id: 'scheduler',
+      origin: schedulerOrigin,
+      kind: 'scheduler',
+    }
+  }
+  return {
+    ...selectedNode,
+    kind: 'node',
+  }
+}
+
+function isBoxControlPath(pathname: string): boolean {
+  return pathname === '/v1/boxes'
+    || pathname.startsWith('/v1/boxes/')
+    || pathname === '/v1/allocations'
+    || pathname.startsWith('/v1/allocations/')
+}
+
+function hasExplicitNodeOverride(url: URL, request: Request): boolean {
+  return Boolean(request.headers.get('x-sandbank-node-id') || url.searchParams.get('node_id'))
+}
+
 function markResponse(response: Response, node: NodeTarget, fallback: boolean): Response {
   const headers = new Headers(response.headers)
   headers.set('x-sandbank-api-worker', '1')
-  headers.set('x-sandbank-node-id', node.id)
+  headers.set('x-sandbank-api-target-id', node.id)
+  headers.set('x-sandbank-api-target-kind', node.kind || 'node')
+  if (!headers.has('x-sandbank-node-id')) {
+    headers.set('x-sandbank-node-id', node.id)
+  }
   if (fallback) headers.set('x-sandbank-upstream-fallback', '1')
   return new Response(response.body, {
     headers,
@@ -330,6 +381,26 @@ function normalizeOrigin(origin: string): string {
   url.search = ''
   url.hash = ''
   return url.toString().replace(/\/$/, '')
+}
+
+function normalizeOriginWithPath(origin: string): string {
+  if (!origin.trim()) return ''
+  const url = new URL(origin)
+  url.pathname = normalizePathPrefix(url.pathname)
+  url.search = ''
+  url.hash = ''
+  return url.toString().replace(/\/$/, '')
+}
+
+function normalizePathPrefix(pathname: string): string {
+  if (!pathname || pathname === '/') return ''
+  return `/${pathname.split('/').filter(Boolean).join('/')}`
+}
+
+function joinOriginPath(prefixPath: string, pathname: string): string {
+  const prefix = normalizePathPrefix(prefixPath)
+  if (!prefix) return pathname
+  return `${prefix}${pathname.startsWith('/') ? pathname : `/${pathname}`}`
 }
 
 function isUpgradeRequest(request: Request): boolean {

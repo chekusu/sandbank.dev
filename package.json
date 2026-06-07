@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "portless sandbank-dev vite",
     "build": "vite build",
-    "preview": "portless sandbank-dev vite preview"
+    "preview": "portless sandbank-dev vite preview",
+    "test:api-worker": "vitest run workers/api/src/index.test.ts",
+    "typecheck:api-worker": "tsc -p workers/api/tsconfig.json"
   },
   "dependencies": {
     "@clerk/backend": "^3.4.7",
@@ -25,6 +27,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^4.0.18"
   }
 }

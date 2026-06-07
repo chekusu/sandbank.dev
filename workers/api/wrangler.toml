@@ -10,4 +10,5 @@ routes = [
 DEFAULT_NODE_ID = "tyo-1"
 DEFAULT_NODE_ORIGIN = "https://tyo-1.node.sandbank.dev"
 FALLBACK_NODE_ORIGIN = "https://cloud.sandbank.dev"
-NODE_ORIGINS_JSON = "{\"tyo-1\":\"https://tyo-1.node.sandbank.dev\"}"
+NODE_ORIGINS_JSON = "{\"tyo-1\":\"https://tyo-1.node.sandbank.dev\",\"tyo-2\":\"https://tyo-2.node.sandbank.dev\"}"
+SCHEDULER_ORIGIN = "https://tyo-1.node.sandbank.dev/__scheduler"
