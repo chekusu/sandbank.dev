@@ -27,7 +27,9 @@ class FakeD1 {
   }
 
   async batch(statements: FakeD1Statement[]) {
-    return Promise.all(statements.map((statement) => statement.run()))
+    const results = []
+    for (const statement of statements) results.push(await statement.run())
+    return results
   }
 }
 
@@ -156,6 +158,26 @@ class FakeD1Statement {
         updated_at: updatedAt || new Date(0).toISOString(),
       })
       return { success: true, results: [] }
+    }
+
+    if (query.startsWith('insert into tenant_balance_ledger') && query.includes("select ?, tenant_id, 'debit'")) {
+      const [id, amountCents, debit, boxId, description, tenantId, requiredBalance] = this.values
+      const billing = this.db.billing.get(String(tenantId))
+      if (!billing || Number(billing.balance_cents) < Number(requiredBalance)) {
+        return { success: true, results: [], meta: { changes: 0 } }
+      }
+      this.db.ledger.set(String(id), {
+        id,
+        tenant_id: tenantId,
+        kind: 'debit',
+        amount_cents: amountCents,
+        balance_after_cents: Number(billing.balance_cents) - Number(debit),
+        box_id: boxId,
+        description,
+        stripe_payment_intent_id: null,
+        created_at: new Date(0).toISOString(),
+      })
+      return { success: true, results: [], meta: { changes: 1 } }
     }
 
     if (query.startsWith('insert into tenant_balance_ledger')) {
@@ -426,6 +448,27 @@ describe('sandbank api worker routing', () => {
     }), authorityEnv)
     expect(duplicateDebit.status).toBe(200)
     expect(await duplicateDebit.json()).toMatchObject({ ok: true, ledger_id: 'ledger-1', duplicate: true })
+
+    const insufficient = await worker.fetch(new Request('https://api.sandbank.dev/internal/tenant/billing/debit', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer test-authority-token',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        ledger_id: 'ledger-2',
+        tenant_id: 'tenant-1',
+        amount_cents: 1000,
+      }),
+    }), authorityEnv)
+    expect(insufficient.status).toBe(402)
+    expect(await insufficient.json()).toMatchObject({
+      code: 'insufficient_balance',
+      balance_cents: 93,
+      required_cents: 1000,
+    })
+    expect(tenantDb.ledger.has('ledger-2')).toBe(false)
+    expect(tenantDb.billing.get('tenant-1')?.balance_cents).toBe(93)
 
     const billing = await worker.fetch(new Request('https://api.sandbank.dev/internal/tenant/billing/read', {
       method: 'POST',

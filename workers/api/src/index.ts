@@ -307,21 +307,30 @@ async function debitTenantBilling(request: Request, db: D1Database): Promise<Res
   const debit = Math.round(amountCents)
   const account = await getTenantBillingAccount(db, tenantId)
   if (!account) return json({ error: 'Billing account not found', code: 'billing_missing' }, 402)
-  if (account.balance_cents < debit) {
-    return json({
-      error: 'Insufficient tenant balance',
-      code: 'insufficient_balance',
-      balance_cents: account.balance_cents,
-      required_cents: debit,
-    }, 402)
-  }
 
-  const updated = await db.prepare(`
-    UPDATE tenant_billing_accounts
-    SET balance_cents = balance_cents - ?, updated_at = CURRENT_TIMESTAMP
-    WHERE tenant_id = ? AND balance_cents >= ?
-  `).bind(debit, tenantId, debit).run()
-  if ((updated.meta?.changes ?? 0) < 1) {
+  // Both statements run in an implicit transaction via batch(), so the
+  // balance update and the ledger entry either both apply or neither does.
+  // The `balance_cents >= ?` guards are the single authority on sufficiency:
+  // the ledger INSERT...SELECT writes no row when the balance is too low,
+  // and it reads the pre-debit balance, so balance_after is computed in SQL.
+  const results = await db.batch([
+    db.prepare(`
+      INSERT INTO tenant_balance_ledger (
+        id, tenant_id, kind, amount_cents, balance_after_cents, box_id, description
+      )
+      SELECT ?, tenant_id, 'debit', ?, balance_cents - ?, ?, ?
+      FROM tenant_billing_accounts
+      WHERE tenant_id = ? AND balance_cents >= ?
+    `).bind(ledgerId, -debit, debit, boxId, description, tenantId, debit),
+    db.prepare(`
+      UPDATE tenant_billing_accounts
+      SET balance_cents = balance_cents - ?, updated_at = CURRENT_TIMESTAMP
+      WHERE tenant_id = ? AND balance_cents >= ?
+    `).bind(debit, tenantId, debit),
+  ])
+  const ledgerWritten = results[0]?.meta?.changes ?? 0
+  const balanceUpdated = results[1]?.meta?.changes ?? 0
+  if (ledgerWritten < 1 || balanceUpdated < 1) {
     const latest = await getTenantBillingAccount(db, tenantId)
     return json({
       error: 'Insufficient tenant balance',
@@ -331,13 +340,10 @@ async function debitTenantBilling(request: Request, db: D1Database): Promise<Res
     }, 402)
   }
 
-  const chargedAccount = await getTenantBillingAccount(db, tenantId)
-  const balanceAfter = chargedAccount?.balance_cents ?? (account.balance_cents - debit)
-  await db.prepare(`
-    INSERT INTO tenant_balance_ledger (
-      id, tenant_id, kind, amount_cents, balance_after_cents, box_id, description
-    ) VALUES (?, ?, 'debit', ?, ?, ?, ?)
-  `).bind(ledgerId, tenantId, -debit, balanceAfter, boxId, description).run()
+  const entry = await db.prepare(`SELECT balance_after_cents FROM tenant_balance_ledger WHERE id = ? LIMIT 1`)
+    .bind(ledgerId)
+    .first<{ balance_after_cents: number }>()
+  const balanceAfter = entry?.balance_after_cents ?? (account.balance_cents - debit)
   return json({ ok: true, ledger_id: ledgerId, balance_cents: balanceAfter })
 }
 
