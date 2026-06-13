@@ -14,31 +14,34 @@ import './index.css'
 initLocale()
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
+const routerBasename = import.meta.env.BASE_URL === '/'
+  ? undefined
+  : import.meta.env.BASE_URL.replace(/\/$/, '')
 
 const clerkAppearance: ClerkProviderProps['appearance'] = {
   baseTheme: dark,
   variables: {
-    colorPrimary: '#d8ad48',
-    colorBackground: '#12110f',
-    colorInputBackground: '#191815',
-    colorInputText: '#f5f0e4',
-    colorText: '#f5f0e4',
-    colorTextSecondary: '#aaa394',
-    borderRadius: '0px',
-    fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+    colorPrimary: '#f26522',
+    colorBackground: '#000000',
+    colorInputBackground: '#111111',
+    colorInputText: '#e8e8e8',
+    colorText: '#e8e8e8',
+    colorTextSecondary: '#999999',
+    borderRadius: '16px',
+    fontFamily: 'Space Grotesk, ui-sans-serif, system-ui, sans-serif',
   },
   elements: {
     cardBox: 'shadow-none',
-    card: 'border border-[#d8ad48]/20 bg-[#12110f]',
+    card: 'border border-[#222] bg-[#111]',
     formButtonPrimary: 'shadow-none',
-    footerActionLink: 'text-[#d8ad48]',
-    identityPreviewEditButton: 'text-[#d8ad48]',
+    footerActionLink: 'text-[#f26522]',
+    identityPreviewEditButton: 'text-[#f26522]',
   },
 }
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cloud" element={<Cloud />} />

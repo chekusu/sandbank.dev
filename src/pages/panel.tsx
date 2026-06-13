@@ -213,14 +213,14 @@ export default function Panel() {
   if (!CLERK_KEY) {
     return (
       <PanelFrame>
-        <div className="flex min-h-screen flex-col px-5 py-6 sm:px-8">
+        <div className="panel-page flex min-h-screen flex-col px-5 py-6 sm:px-8">
           <AuthTopbar />
           <div className="flex flex-1 items-center">
-            <div className="max-w-xl border border-sand-400/20 bg-sand-400/[0.03] p-8">
+            <div className="panel-card max-w-xl border p-8">
               <p className="mb-4 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-sand-400">
                 {t('panelSetup')}
               </p>
-              <h1 className="mb-4 text-3xl font-normal">{t('panelClerkMissing')}</h1>
+              <h1 className="panel-doto mb-4 text-5xl font-normal">{t('panelClerkMissing')}</h1>
               <p className="font-mono text-[0.75rem] leading-relaxed text-text-muted">
                 {t('panelClerkMissingDesc')}
               </p>
@@ -234,14 +234,15 @@ export default function Panel() {
   return (
     <PanelFrame>
       <SignedOut>
-        <div className="flex min-h-screen flex-col px-5 py-6 sm:px-8">
+        <div className="panel-page flex min-h-screen flex-col px-5 py-6 sm:px-8">
           <AuthTopbar />
           <div className="flex flex-1 items-center">
-            <div className="max-w-xl">
-              <p className="mb-5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-text-muted">
-                Sandbank {t('panel')}
+            <div className="max-w-2xl">
+              <p className="panel-system-label mb-5 flex items-center gap-3">
+                <span className="panel-led" />
+                <span>Sandbank {t('panel')}</span>
               </p>
-              <h1 className="mb-5 text-[clamp(2rem,5vw,4rem)] font-normal leading-tight">
+              <h1 className="panel-doto mb-5 text-[clamp(3.25rem,10vw,7.5rem)] font-normal leading-[0.92] text-text-primary">
                 {t('panelSignedOutTitle')}
               </h1>
               <p className="mb-8 font-mono text-[0.78rem] leading-relaxed text-text-muted">
@@ -640,10 +641,11 @@ function PanelDashboard() {
 
   if (showProjectOnboarding) {
     return (
-      <div className="min-h-screen">
+      <div className="panel-page min-h-screen">
         <PanelHeader
           loading={loading}
           active={section}
+          onRefresh={() => void refresh()}
           projects={projects}
           projectNodes={projectNodes}
           currentProject={currentProject}
@@ -656,9 +658,7 @@ function PanelDashboard() {
         />
         <main className="px-5 py-8 sm:px-8">
           {error && (
-            <div className="mb-6 border border-red-400/30 bg-red-400/5 px-4 py-3 font-mono text-[0.72rem] text-red-300">
-              {error}
-            </div>
+            <PanelError message={error} />
           )}
           {newSecret && (
             <SecretBanner secret={newSecret} onDismiss={() => setNewSecret(null)} />
@@ -678,10 +678,11 @@ function PanelDashboard() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="panel-page min-h-screen">
       <PanelHeader
         loading={loading}
         active={section}
+        onRefresh={() => void refresh()}
         projects={projects}
         projectNodes={projectNodes}
         currentProject={currentProject}
@@ -697,14 +698,15 @@ function PanelDashboard() {
         <section className="min-w-0 px-5 py-7 sm:px-8">
           <PageHeading section={section} tenantName={bootstrap?.tenant.name} />
           {error && (
-            <div className="mb-6 border border-red-400/30 bg-red-400/5 px-4 py-3 font-mono text-[0.72rem] text-red-300">
-              {error}
-            </div>
+            <PanelError message={error} />
           )}
           {newSecret && (
             <SecretBanner secret={newSecret} onDismiss={() => setNewSecret(null)} />
           )}
-          {section === 'overview' && (
+          {loading && !bootstrap && (
+            <PanelLoadingSkeleton section={section} />
+          )}
+          {!(loading && !bootstrap) && section === 'overview' && (
             <OverviewPage
               summary={summary}
               billing={billing}
@@ -713,13 +715,13 @@ function PanelDashboard() {
               locale={locale}
             />
           )}
-          {section === 'boxes' && (
+          {!(loading && !bootstrap) && section === 'boxes' && (
             <BoxesPage boxes={boxes} locale={locale} />
           )}
-          {section === 'relay' && (
+          {!(loading && !bootstrap) && section === 'relay' && (
             <RelayPage graph={graph} boxes={boxes} />
           )}
-          {section === 'billing' && (
+          {!(loading && !bootstrap) && section === 'billing' && (
             <BillingPage
               billing={billing}
               detail={billingDetail}
@@ -730,7 +732,7 @@ function PanelDashboard() {
               locale={locale}
             />
           )}
-          {section === 'api-keys' && (
+          {!(loading && !bootstrap) && section === 'api-keys' && (
             <ApiKeysPage
               keys={keys}
               currentProject={currentProject}
@@ -739,7 +741,7 @@ function PanelDashboard() {
               locale={locale}
             />
           )}
-          {section === 'webhooks' && (
+          {!(loading && !bootstrap) && section === 'webhooks' && (
             <WebhooksPage
               webhook={webhook}
               loading={loading}
@@ -747,7 +749,7 @@ function PanelDashboard() {
               deleteWebhook={deleteWebhook}
             />
           )}
-          {section === 'project-settings' && (
+          {!(loading && !bootstrap) && section === 'project-settings' && (
             <ProjectSettingsPage
               currentProject={currentProject}
               projectCount={projects.length}
@@ -764,7 +766,7 @@ function PanelDashboard() {
 
 function PanelFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-surface text-text-primary">
+    <div className="panel-shell min-h-screen bg-surface text-text-primary">
       {children}
     </div>
   )
@@ -790,6 +792,7 @@ function AuthTopbar() {
 function PanelHeader({
   loading,
   active,
+  onRefresh,
   projects,
   projectNodes,
   currentProject,
@@ -802,6 +805,7 @@ function PanelHeader({
 }: {
   loading: boolean
   active: PanelSection
+  onRefresh: () => void
   projects: Project[]
   projectNodes: ProjectNode[]
   currentProject?: Project
@@ -814,10 +818,11 @@ function PanelHeader({
 }) {
   const t = useT()
   return (
-    <header className="sticky top-0 z-20 border-b border-sand-400/10 bg-surface/90 backdrop-blur-sm">
+    <header className="panel-topbar sticky top-0 z-20 border-b">
       <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <Link to="/cloud" className="font-mono text-xs uppercase tracking-[0.15em] text-sand-400">
+          <Link to="/cloud" className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.15em] text-sand-400">
+            <span className="panel-led" />
             sandbank
           </Link>
           <ProjectSwitcher
@@ -834,14 +839,23 @@ function PanelHeader({
           />
         </div>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="panel-button-secondary hidden items-center gap-2 px-3 py-2 sm:inline-flex"
+            disabled={loading}
+          >
+            <span className={loading ? 'panel-led' : 'panel-led panel-led-green'} />
+            {loading ? t('panelSyncing') : t('panelRefresh')}
+          </button>
           <Link
             to="/panel/billing"
             aria-label={t('panelNavBilling')}
             title={t('panelNavBilling')}
-            className={`grid h-9 w-9 place-items-center border transition-colors ${
+            className={`grid h-10 w-10 place-items-center rounded-full border transition-colors ${
               active === 'billing'
-                ? 'border-sand-400/35 bg-sand-400/[0.08] text-sand-400'
-                : 'border-sand-400/14 text-text-muted hover:border-sand-400/30 hover:text-sand-400'
+                ? 'border-sand-400/35 bg-sand-400/[0.12] text-sand-400'
+                : 'border-white/10 bg-white/[0.035] text-text-muted hover:border-white/20 hover:text-text-primary'
             }`}
           >
             <BillingIcon className="h-5 w-5" />
@@ -974,7 +988,7 @@ function PanelLanguageSwitcher({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between border border-sand-400/14 bg-surface-raised px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-text-primary transition-colors hover:border-sand-400/30 hover:text-sand-400"
+        className="flex w-full min-h-10 items-center justify-between rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-text-primary transition-colors hover:border-white/20 hover:text-text-primary"
       >
         <span className="flex min-w-0 items-center gap-2">
           <span className="text-sand-400">{localeLabels[locale]}</span>
@@ -988,7 +1002,7 @@ function PanelLanguageSwitcher({
         />
       </button>
       {open && (
-        <div className={`absolute left-0 z-30 max-h-64 w-full overflow-y-auto border border-sand-400/14 bg-surface-raised shadow-2xl ${menuPosition}`}>
+        <div className={`absolute left-0 z-30 max-h-64 w-full overflow-y-auto rounded-[14px] border border-white/10 bg-surface-raised shadow-2xl ${menuPosition}`}>
           {locales.map((loc: Locale) => {
             const active = loc === locale
             return (
@@ -999,10 +1013,10 @@ function PanelLanguageSwitcher({
                   setLocale(loc)
                   setOpen(false)
                 }}
-                className={`flex w-full items-center justify-between border-b border-sand-400/8 px-3 py-2 text-left font-mono transition-colors last:border-b-0 ${
+                className={`flex w-full items-center justify-between border-b border-white/10 px-3 py-2 text-left font-mono transition-colors last:border-b-0 ${
                   active
-                    ? 'bg-sand-400/[0.07] text-sand-400'
-                    : 'text-text-muted hover:bg-sand-400/[0.04] hover:text-text-primary'
+                    ? 'bg-sand-400/[0.12] text-sand-400'
+                    : 'text-text-muted hover:bg-white/[0.035] hover:text-text-primary'
                 }`}
               >
                 <span className="min-w-0 truncate text-[0.7rem]">{localeNames[loc]}</span>
@@ -1022,22 +1036,23 @@ function PanelNav({ active }: { active: PanelSection }) {
     { key: 'overview' as const, path: '/panel', label: t('panelNavOverview'), icon: OverviewIcon },
     { key: 'boxes' as const, path: '/panel/boxes', label: t('panelNavBoxes'), icon: BoxIcon },
     { key: 'relay' as const, path: '/panel/relay', label: t('panelNavRelay'), icon: RelayIcon },
+    { key: 'billing' as const, path: '/panel/billing', label: t('panelNavBilling'), icon: BillingIcon },
     { key: 'api-keys' as const, path: '/panel/api-keys', label: t('panelNavApiKeys'), icon: KeyIcon },
     { key: 'webhooks' as const, path: '/panel/webhooks', label: t('panelNavWebhooks'), icon: WebhookIcon },
     { key: 'project-settings' as const, path: '/panel/project-settings', label: t('panelNavProjectSettings'), icon: SettingsIcon },
   ]), [t])
 
   return (
-    <aside className="flex flex-col border-b border-sand-400/10 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r">
-      <nav className="flex overflow-x-auto px-5 py-3 lg:block lg:flex-1 lg:px-6 lg:py-6">
+    <aside className="flex flex-col border-b border-white/10 bg-black/45 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r">
+      <nav className="flex overflow-x-auto px-5 py-3 lg:block lg:flex-1 lg:px-5 lg:py-6">
         {items.map((item) => (
           <Link
             key={item.key}
             to={item.path}
-            className={`mr-2 inline-flex items-center gap-2 whitespace-nowrap border px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] transition-colors lg:mb-2 lg:mr-0 lg:flex ${
+            className={`mr-2 inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full border px-3 py-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] transition-colors lg:mb-2 lg:mr-0 lg:flex ${
               active === item.key
-                ? 'border-sand-400/30 bg-sand-400/[0.07] text-sand-400'
-                : 'border-transparent text-text-muted hover:border-sand-400/15 hover:text-text-primary'
+                ? 'border-sand-400/40 bg-sand-400/[0.12] text-sand-400'
+                : 'border-transparent text-text-muted hover:border-white/10 hover:bg-white/[0.035] hover:text-text-primary'
             }`}
           >
             <item.icon className="h-4 w-4 shrink-0" />
@@ -1045,8 +1060,8 @@ function PanelNav({ active }: { active: PanelSection }) {
           </Link>
         ))}
       </nav>
-      <div className="border-t border-sand-400/10 px-5 py-4 lg:px-6">
-        <p className="mb-2 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-text-muted">
+      <div className="border-t border-white/10 px-5 py-4 lg:px-6">
+        <p className="panel-system-label mb-2">
           {t('panelLanguage')}
         </p>
         <PanelLanguageSwitcher className="w-full" />
@@ -1218,7 +1233,7 @@ function ProjectSwitcher({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-w-0 max-w-[15rem] items-center gap-2 border border-sand-400/14 bg-surface-raised px-3 py-2 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-text-primary transition-colors hover:border-sand-400/30 hover:text-sand-400 sm:max-w-[20rem]"
+        className="flex min-h-10 min-w-0 max-w-[15rem] items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-text-primary transition-colors hover:border-white/20 sm:max-w-[20rem]"
       >
         <span className="text-text-muted">{t('panelProject')}</span>
         <span className="truncate">{currentProject?.name || t('panelNoProjects')}</span>
@@ -1235,8 +1250,8 @@ function ProjectSwitcher({
         />
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-3 w-[min(22rem,calc(100vw-2rem))] border border-sand-400/14 bg-surface-raised shadow-2xl">
-          <div className="border-b border-sand-400/10 px-4 py-3">
+        <div className="absolute left-0 top-full z-30 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[14px] border border-white/10 bg-surface-raised shadow-2xl">
+          <div className="border-b border-white/10 px-4 py-3">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-text-muted">
               {t('panelProjects')}
             </p>
@@ -1254,10 +1269,10 @@ function ProjectSwitcher({
                     setSelectedProjectId(project.id)
                     setOpen(false)
                   }}
-                  className={`w-full border px-3 py-2 text-left font-mono transition-colors ${
+                  className={`w-full rounded-[10px] border px-3 py-2 text-left font-mono transition-colors ${
                     active
-                      ? 'border-sand-400/30 bg-sand-400/[0.07] text-sand-400'
-                      : 'border-transparent text-text-muted hover:border-sand-400/15 hover:text-text-primary'
+                      ? 'border-sand-400/35 bg-sand-400/[0.12] text-sand-400'
+                      : 'border-transparent text-text-muted hover:border-white/10 hover:bg-white/[0.035] hover:text-text-primary'
                   }`}
                 >
                   <span className="flex min-w-0 items-center justify-between gap-3">
@@ -1272,13 +1287,13 @@ function ProjectSwitcher({
               )
             })}
             {projects.length === 0 && (
-              <div className="border border-dashed border-sand-400/12 px-3 py-3 font-mono text-[0.68rem] text-text-muted">
+              <div className="rounded-[10px] border border-dashed border-white/10 px-3 py-3 font-mono text-[0.68rem] text-text-muted">
                 {t('panelNoProjects')}
               </div>
             )}
           </div>
           <form
-            className="grid gap-2 border-t border-sand-400/10 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,auto)_auto]"
+            className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,auto)_auto]"
             onSubmit={(event) => {
               event.preventDefault()
               void createProject().then((created) => {
@@ -1306,7 +1321,7 @@ function ProjectSwitcher({
             </select>
             <button
               type="submit"
-              className="border border-sand-400/20 px-3 py-2 font-mono text-[0.62rem] uppercase text-sand-400 transition-colors hover:bg-sand-400/[0.07] disabled:cursor-not-allowed disabled:text-text-muted"
+              className="rounded-full border border-sand-400/30 px-3 py-2 font-mono text-[0.62rem] uppercase text-sand-400 transition-colors hover:bg-sand-400/[0.12] disabled:cursor-not-allowed disabled:text-text-muted"
               disabled={loading || !projectName.trim() || projectNodes.length === 0}
             >
               {t('panelCreate')}
@@ -1331,11 +1346,13 @@ function PageHeading({ section, tenantName }: { section: PanelSection; tenantNam
   } satisfies Record<PanelSection, [string, string]>
 
   return (
-    <div className="mb-7 border-b border-sand-400/10 pb-7">
-      <p className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-text-muted">
-        {tenantName || t('panel')}
+    <div className="panel-section-heading mb-7 border-b pb-7">
+      <p className="panel-system-label mb-3 flex flex-wrap items-center gap-3">
+        <span className="panel-led panel-led-green" />
+        <span>{tenantName || t('panel')}</span>
+        <span className="text-text-muted">SYS.V4</span>
       </p>
-      <h1 className="text-[clamp(2rem,5vw,3.7rem)] font-normal leading-tight">
+      <h1 className="text-[clamp(2rem,5vw,3.7rem)] font-medium leading-tight tracking-normal text-text-primary">
         {copy[section][0]}
       </h1>
       <p className="mt-3 max-w-2xl font-mono text-[0.76rem] leading-relaxed text-text-muted">
@@ -1450,6 +1467,13 @@ function BillingPage({ billing, detail, setupCard, openBillingPortal, topUp, upd
     <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
       <section className="border border-sand-400/12 bg-sand-400/[0.025]">
         <PanelTitle title={t('panelCard')} detail={billing?.has_card ? `${billing.card_brand} **** ${billing.card_last4}` : t('panelNoCard')} />
+        <div className="px-4 py-5">
+          <p className="panel-system-label">{t('panelBalance')}</p>
+          <p className="panel-doto mt-3 text-6xl leading-none text-text-primary">{formatMoney(billing?.balance_cents ?? 0)}</p>
+          <div className="mt-5">
+            <SegmentMeter active={metricLevel(formatMoney(billing?.balance_cents ?? 0), 3)} total={20} tone={(billing?.balance_cents ?? 0) < 0 ? 'red' : 'orange'} />
+          </div>
+        </div>
         <div className="grid gap-px bg-sand-400/10 font-mono text-[0.74rem]">
           <InfoRow label={t('panelBalance')} value={formatMoney(billing?.balance_cents ?? 0)} />
           <InfoRow label={t('panelAutoTopUp')} value={billing?.auto_topup_enabled ? t('panelEnabled') : t('panelDisabled')} />
@@ -1480,13 +1504,21 @@ function ApiKeysPage({ keys, currentProject, createApiKey, revokeApiKey, locale 
   locale: Locale
 }) {
   const t = useT()
+  const activeKeyCount = keys.filter((key) => !key.revoked_at).length
   return (
     <section className="border border-sand-400/12 bg-sand-400/[0.025]">
       <PanelTitle
         title={t('panelApiKeysTitle')}
-        detail={`${keys.filter((key) => !key.revoked_at).length} ${t('panelActive')} · ${currentProject?.name ?? t('panelProject')}`}
+        detail={`${activeKeyCount} ${t('panelActive')} · ${currentProject?.name ?? t('panelProject')}`}
       />
-      <p className="border-b border-sand-400/10 px-4 pb-4 font-mono text-[0.72rem] leading-relaxed text-text-muted">
+      <div className="grid gap-4 border-b border-white/10 px-4 py-5 md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-end">
+        <div>
+          <p className="panel-system-label">{t('panelActive')}</p>
+          <p className="panel-doto mt-3 text-6xl leading-none text-text-primary">{activeKeyCount}</p>
+        </div>
+        <SegmentMeter active={Math.max(1, Math.min(20, activeKeyCount || 1))} total={20} tone={activeKeyCount > 0 ? 'green' : 'orange'} />
+      </div>
+      <p className="border-b border-sand-400/10 px-4 py-4 font-mono text-[0.72rem] leading-relaxed text-text-muted">
         {t('panelApiKeysSubtitle')}
       </p>
       <div className="overflow-x-auto">
@@ -1602,6 +1634,13 @@ function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
           title={t('panelWebhooksTitle')}
           detail={webhook?.enabled ? t('panelEnabled') : t('panelDisabled')}
         />
+        <div className="grid gap-4 border-b border-white/10 px-4 py-5 md:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] md:items-end">
+          <div>
+            <p className="panel-system-label">{t('panelWebhookEvents')}</p>
+            <p className="panel-doto mt-3 text-6xl leading-none text-text-primary">{activeCount}</p>
+          </div>
+          <SegmentMeter active={Math.max(1, activeCount * 5)} total={15} tone={webhook?.enabled ? 'green' : 'orange'} />
+        </div>
         <form
           className="space-y-5 p-4"
           onSubmit={(event) => {
@@ -1615,7 +1654,7 @@ function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
               type="checkbox"
               checked={enabled}
               onChange={(event) => setEnabled(event.target.checked)}
-              className="h-4 w-4 accent-[#D4A853]"
+              className="h-4 w-4 accent-[#f26522]"
             />
           </label>
 
@@ -1649,7 +1688,7 @@ function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
                     type="checkbox"
                     checked={events.includes(eventName)}
                     onChange={() => toggleEvent(eventName)}
-                    className="h-4 w-4 accent-[#D4A853]"
+                    className="h-4 w-4 accent-[#f26522]"
                   />
                 </label>
               ))}
@@ -1697,7 +1736,7 @@ function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
                 checked={clearSecret}
                 disabled={!webhook?.has_secret}
                 onChange={(event) => setClearSecret(event.target.checked)}
-                className="h-4 w-4 accent-[#D4A853]"
+                className="h-4 w-4 accent-[#f26522]"
               />
               {t('panelWebhookClearSecret')}
             </label>
@@ -1707,7 +1746,7 @@ function WebhooksPage({ webhook, loading, saveWebhook, deleteWebhook }: {
                 checked={clearToken}
                 disabled={!webhook?.has_token}
                 onChange={(event) => setClearToken(event.target.checked)}
-                className="h-4 w-4 accent-[#D4A853]"
+                className="h-4 w-4 accent-[#f26522]"
               />
               {t('panelWebhookClearToken')}
             </label>
@@ -1857,15 +1896,55 @@ function ProjectSettingsPage({
 
 function MetricGrid({ metrics }: { metrics: Array<{ label: string; value: string | number }> }) {
   return (
-    <div className="grid grid-cols-2 gap-px border border-sand-400/10 bg-sand-400/10 md:grid-cols-4">
-      {metrics.map((metric) => (
-        <div key={metric.label} className="bg-surface px-4 py-5">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-text-muted">{metric.label}</p>
-          <p className="mt-3 font-mono text-2xl text-sand-400">{metric.value}</p>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {metrics.map((metric, index) => (
+        <div key={metric.label} className="panel-card border px-4 py-5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="panel-system-label max-w-[9rem]">{metric.label}</p>
+            <span className="panel-system-label text-text-muted">CH {String(index + 1).padStart(2, '0')}</span>
+          </div>
+          <p className="panel-doto mt-5 text-[clamp(2.3rem,6vw,4.4rem)] font-normal leading-none text-text-primary">
+            {metric.value}
+          </p>
+          <div className="mt-5">
+            <SegmentMeter active={metricLevel(metric.value, index)} total={18} tone={index === 0 ? 'green' : 'orange'} />
+          </div>
         </div>
       ))}
     </div>
   )
+}
+
+function SegmentMeter({
+  active,
+  total = 16,
+  tone = 'orange',
+}: {
+  active: number
+  total?: number
+  tone?: 'orange' | 'green' | 'red'
+}) {
+  return (
+    <div className={`panel-meter ${tone === 'green' ? 'panel-meter-green' : tone === 'red' ? 'panel-meter-red' : ''}`}>
+      {Array.from({ length: total }, (_, index) => (
+        <span
+          // eslint-disable-next-line react/no-array-index-key
+          key={index}
+          className={index < active ? 'is-on' : ''}
+          style={{ animationDelay: `${index * 28}ms` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function metricLevel(value: string | number, index: number): number {
+  const numeric = typeof value === 'number'
+    ? value
+    : Number(String(value).replace(/[^0-9.-]/g, ''))
+  if (!Number.isFinite(numeric) || numeric <= 0) return index === 3 ? 2 : 1
+  const scaled = index === 3 ? Math.min(18, Math.ceil(numeric / 5)) : Math.min(18, Math.ceil(numeric))
+  return Math.max(1, scaled)
 }
 
 function BoxesTable({ title, boxes, locale, compact = false }: {
@@ -2106,7 +2185,7 @@ function RelayCanvas({ graph, boxes, catalog }: { graph?: RelayGraph; boxes: Pan
     <section className="border border-sand-400/12 bg-sand-400/[0.025] xl:row-span-2">
       <PanelTitle title={t('panelRelayCanvasTitle')} detail={`${model.edges.length} ${t('panelSuggestedRelations')}`} />
       <div
-        className="relative min-h-[34rem] overflow-hidden bg-[linear-gradient(rgba(212,168,83,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(212,168,83,0.06)_1px,transparent_1px)] bg-[size:32px_32px] touch-none select-none cursor-grab active:cursor-grabbing"
+        className="panel-relay-canvas relative min-h-[34rem] touch-none select-none overflow-hidden cursor-grab active:cursor-grabbing"
         style={{ height: canvasSize.height }}
         onPointerDown={startPan}
         onPointerMove={movePan}
@@ -2135,7 +2214,7 @@ function RelayCanvas({ graph, boxes, catalog }: { graph?: RelayGraph; boxes: Pan
                   <path
                     d={path}
                     fill="none"
-                    stroke={live ? 'rgba(212,168,83,0.76)' : 'rgba(197,189,175,0.38)'}
+                    stroke={live ? 'rgba(242,101,34,0.82)' : 'rgba(153,153,153,0.42)'}
                     strokeDasharray={live ? undefined : '7 8'}
                     strokeWidth={live ? 1.6 : 1.2}
                   />
@@ -2163,8 +2242,8 @@ function RelayCanvas({ graph, boxes, catalog }: { graph?: RelayGraph; boxes: Pan
           ))}
         </div>
         <div className="pointer-events-none absolute bottom-4 left-4 flex flex-wrap gap-2 font-mono text-[0.62rem] uppercase tracking-[0.1em]">
-          <span className="border border-sand-400/25 bg-surface/90 px-2 py-1 text-sand-400">{t('panelLiveRelations')}</span>
-          <span className="border border-text-muted/20 bg-surface/90 px-2 py-1 text-text-muted">{t('panelAvailableRelations')}</span>
+          <span className="rounded-full border border-sand-400/25 bg-black/90 px-2 py-1 text-sand-400">{t('panelLiveRelations')}</span>
+          <span className="rounded-full border border-white/15 bg-black/90 px-2 py-1 text-text-muted">{t('panelAvailableRelations')}</span>
         </div>
       </div>
     </section>
@@ -2185,11 +2264,11 @@ function RelayCanvasNodeCard({
   onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void
 }) {
   const tone = node.kind === 'project'
-    ? 'border-sand-400/35 bg-sand-400/[0.075]'
+    ? 'border-sand-400/35 bg-sand-400/[0.08]'
     : node.kind === 'functional'
-      ? 'border-emerald-300/20 bg-emerald-300/[0.045]'
+      ? 'border-[#4a9e5c]/25 bg-[#4a9e5c]/[0.055]'
       : node.kind === 'public-node'
-        ? 'border-sky-300/20 bg-sky-300/[0.045]'
+        ? 'border-white/15 bg-white/[0.04]'
         : 'border-text-muted/20 bg-surface-raised'
 
   return (
@@ -2199,13 +2278,13 @@ function RelayCanvasNodeCard({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
-      className={`absolute cursor-grab border px-4 py-3 text-left shadow-[0_16px_40px_rgba(0,0,0,0.18)] transition-colors active:cursor-grabbing ${tone}`}
+      className={`absolute cursor-grab rounded-2xl border px-4 py-3 text-left shadow-[0_20px_52px_rgba(0,0,0,0.45)] transition-colors active:cursor-grabbing ${tone}`}
       style={{ left: node.x, top: node.y, width: node.width, height: node.height }}
     >
       <span className="block truncate font-mono text-[0.58rem] uppercase tracking-[0.12em] text-text-muted">{node.eyebrow}</span>
       <span className="mt-2 block truncate font-mono text-[0.82rem] text-text-primary">{node.title}</span>
       <span className="mt-1 block truncate font-mono text-[0.66rem] text-text-muted">{node.subtitle}</span>
-      <span className="mt-3 flex items-center justify-between gap-3 border-t border-sand-400/10 pt-2 font-mono text-[0.62rem] uppercase tracking-[0.08em] text-text-muted">
+      <span className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 font-mono text-[0.62rem] uppercase tracking-[0.08em] text-text-muted">
         <span className="min-w-0 truncate">{node.meta}</span>
         {node.status && <StatusPill status={node.status} />}
       </span>
@@ -2218,6 +2297,12 @@ function BillingSummaryPanel({ billing }: { billing?: BillingAccount }) {
   return (
     <section className="border border-sand-400/12 bg-sand-400/[0.025]">
       <PanelTitle title={t('panelBillingTitle')} detail={billing?.has_card ? `${billing.card_brand} **** ${billing.card_last4}` : t('panelNoCard')} />
+      <div className="px-4 py-5">
+        <p className="panel-doto text-5xl leading-none text-text-primary">{formatMoney(billing?.balance_cents ?? 0)}</p>
+        <div className="mt-4">
+          <SegmentMeter active={metricLevel(formatMoney(billing?.balance_cents ?? 0), 3)} total={14} />
+        </div>
+      </div>
       <div className="grid gap-px bg-sand-400/10 font-mono text-[0.74rem]">
         <InfoRow label={t('panelBalance')} value={formatMoney(billing?.balance_cents ?? 0)} />
         <InfoRow label={t('panelAutoTopUp')} value={billing?.auto_topup_enabled ? t('panelEnabled') : t('panelDisabled')} />
@@ -2266,7 +2351,7 @@ function AutoTopupPanel({ billing, updateAutoTopUp }: {
             type="checkbox"
             checked={enabled}
             onChange={(event) => setEnabled(event.target.checked)}
-            className="h-4 w-4 accent-[#D4A853]"
+            className="h-4 w-4 accent-[#f26522]"
           />
         </label>
         <MoneyInput label={t('panelThreshold')} value={threshold} setValue={setThreshold} />
@@ -2348,6 +2433,41 @@ function TopupsPanel({ topups, locale }: { topups: TopupRecord[]; locale: Locale
   )
 }
 
+function PanelError({ message }: { message: string }) {
+  return (
+    <div className="panel-card panel-danger-card mb-6 border px-4 py-3 font-mono text-[0.72rem] text-[#d71921]">
+      <div className="flex items-start gap-3">
+        <span className="panel-led panel-led-red mt-1" />
+        <div>
+          <p className="panel-system-label-strong uppercase tracking-[0.12em] text-[#d71921]">ERR CHANNEL</p>
+          <p className="mt-1 break-words text-text-secondary">{message}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PanelLoadingSkeleton({ section }: { section: PanelSection }) {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-live="polite">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="panel-skeleton min-h-[10rem]" />
+        ))}
+      </div>
+      <div className={section === 'relay' ? 'grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]' : 'grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.8fr)]'}>
+        <div className="panel-skeleton min-h-[26rem]" />
+        <div className="panel-skeleton min-h-[18rem]" />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="panel-skeleton" />
+        <div className="panel-skeleton" />
+        <div className="panel-skeleton" />
+      </div>
+    </div>
+  )
+}
+
 function SecretBanner({ secret, onDismiss }: { secret: string; onDismiss: () => void }) {
   const t = useT()
   const [copied, setCopied] = useState(false)
@@ -2357,12 +2477,12 @@ function SecretBanner({ secret, onDismiss }: { secret: string; onDismiss: () => 
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <div className="mb-6 border border-sand-400/30 bg-sand-400/[0.04] p-4">
+    <div className="panel-card mb-6 border border-sand-400/30 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-sand-400">{t('panelNewApiKey')}</p>
+          <p className="panel-system-label text-sand-400">{t('panelNewApiKey')}</p>
           <p className="mt-1 font-mono text-[0.66rem] text-text-muted">{t('panelSecretHint')}</p>
-          <code className="mt-2 block break-all font-mono text-[0.78rem] text-text-secondary">{secret}</code>
+          <code className="mt-3 block break-all rounded-[10px] border border-white/10 bg-black px-3 py-3 font-mono text-[0.78rem] text-text-secondary">{secret}</code>
         </div>
         <div className="flex gap-2">
           <button onClick={copy} className="panel-button-primary">{copied ? t('panelCopied') : t('panelCopy')}</button>
@@ -2375,16 +2495,16 @@ function SecretBanner({ secret, onDismiss }: { secret: string; onDismiss: () => 
 
 function PanelTitle({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-sand-400/10 px-4 py-3">
-      <h2 className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-sand-400">{title}</h2>
-      <span className="font-mono text-[0.65rem] text-text-muted">{detail}</span>
+    <div className="panel-title-row flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3">
+      <h2 className="panel-system-label-strong font-mono text-[0.72rem] uppercase tracking-[0.12em] text-text-primary">{title}</h2>
+      <span className="panel-system-label text-text-muted">{detail}</span>
     </div>
   )
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 bg-surface px-4 py-3">
+    <div className="flex items-center justify-between gap-4 bg-black px-4 py-3">
       <span className="text-text-muted">{label}</span>
       <span className="text-right text-text-secondary">{value}</span>
     </div>
@@ -2393,8 +2513,11 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="px-4 py-10 text-center font-mono text-[0.72rem] text-text-muted">
-      {children}
+    <div className="panel-empty px-4 py-10 text-center font-mono text-[0.72rem] text-text-muted">
+      <div className="panel-glyph-grid mb-5" aria-hidden="true">
+        {Array.from({ length: 35 }, (_, index) => <span key={index} />)}
+      </div>
+      <p>{children}</p>
     </div>
   )
 }
@@ -2402,13 +2525,25 @@ function EmptyState({ children }: { children: ReactNode }) {
 function StatusPill({ status }: { status: string }) {
   const t = useT()
   const tone = status === 'running'
-    ? 'text-emerald-300'
+    ? 'text-[#4a9e5c]'
     : status === 'error'
-      ? 'text-red-300'
+      ? 'text-[#d71921]'
       : status === 'creating'
         ? 'text-sand-400'
         : 'text-text-muted'
-  return <span className={`font-mono text-[0.68rem] uppercase ${tone}`}>{statusLabel(status, t)}</span>
+  const ledClass = status === 'running'
+    ? 'panel-led panel-led-green'
+    : status === 'error'
+      ? 'panel-led panel-led-red'
+      : status === 'creating'
+        ? 'panel-led'
+        : 'panel-led bg-text-muted'
+  return (
+    <span className={`inline-flex items-center gap-2 font-mono text-[0.68rem] uppercase ${tone}`}>
+      <span className={ledClass} />
+      {statusLabel(status, t)}
+    </span>
+  )
 }
 
 function useRelayCatalog(): RelayCatalogItem[] {
