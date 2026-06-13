@@ -45,7 +45,7 @@
 
 ## 3. 视觉语言
 
-设计 token 集中在 `src/index.css` 的 Tailwind `@theme`：
+基础设计 token 集中在 `src/index.css` 的 Tailwind `@theme`，营销页与代码块默认使用这套 sandbank 主题；控制台再通过 `.panel-shell` 覆盖为另一套 nullframe 风格 token：
 
 | Token | 值 | 用途 |
 | --- | --- | --- |
@@ -54,18 +54,20 @@
 | `--color-sand-400` | `#D4A853`（沙金色） | 唯一品牌强调色：链接、价格、激活态、ASCII 波浪 |
 | `--color-text-primary/secondary/muted` | `#F3F0E8 / #C5BDAF / #A0988B` | 三级暖灰文字 |
 | `--color-border` | `rgba(212,168,83,0.16)` | 边框统一为低透明度沙金 |
+| `.panel-shell --color-surface` | `#000000` | 控制台黑色底色 |
+| `.panel-shell --color-sand-400` / `--panel-orange` | `#f26522` | 控制台主强调色（nullframe 橙） |
+| `.panel-shell --panel-red/green` | `#d71921 / #4a9e5c` | 控制台危险/成功语义色 |
 
-- **配色哲学**：近黑底 + 单一暖沙金，呼应 "Sandbank（沙洲）" 命名；功能色极少且低饱和（emerald 表示在线/免费/优点，red 表示错误/DELETE，blue 仅用于 PUT 方法标签）。文字选区高亮也是沙金 30% 透明度。
-- **字体**：正文 Inter（Google Fonts 仅加载 300/400/500 三个字重），代码与几乎所有标签/元信息用系统 mono 栈（SF Mono/Menlo/Monaco）。**mono 字体的使用比例异常高**——导航、眉题、按钮、表格、说明文字全部是 mono 小字号 + uppercase + 宽字距（`tracking-[0.1em]~[0.15em]`），构成强烈的"终端/基础设施"气质。
+- **配色哲学**：营销页是近黑底 + 单一暖沙金，呼应 "Sandbank（沙洲）" 命名；功能色极少且低饱和（emerald 表示在线/免费/优点，red 表示错误/DELETE，blue 仅用于 PUT 方法标签）。控制台已经切到 nullframe 语言：纯黑底、低亮度灰面、橙色主强调、红/绿状态色，并在背景上叠加 16px 点阵噪声。
+- **字体**：营销页正文 Inter（Google Fonts 仅加载 300/400/500 三个字重），代码与标签/元信息用系统 mono 栈。控制台 `.panel-shell` 改用 Space Grotesk 作为界面字体、Space Mono 作为代码/等宽字体，并预留 Doto 用于数字/系统标签。**mono 字体的使用比例仍然很高**——导航、眉题、按钮、表格、说明文字全部是 mono 小字号 + uppercase + 宽字距（`tracking-[0.1em]~[0.15em]`），构成强烈的"终端/基础设施"气质。
 - **标志性视觉**：`AsciiCanvas`（`src/components/ascii-canvas.tsx`）——Canvas 实时渲染的 ASCII 海浪，分四层深度（泡沫字符 `.:·°*` → 波浪字符 `~≈∽∿` → 密度字符 → 深渊噪点），固定在 Hero 底部 45% 高度，沙金色低透明度绘制；鼠标 120px 半径内字符变成高亮的 `0/1` 二进制——把"沙箱/海"主题和"代码"主题揉在一个交互彩蛋里。
-- **圆角策略分裂**（见设计债务）：营销页用 `rounded-full` 按钮、`rounded-xl/2xl` 卡片；控制台和 Clerk 主题（`borderRadius: '0px'`）则刻意全直角。
-- Clerk 登录组件通过 `clerkAppearance`（`src/main.tsx`）统一成同一套暗色 + 沙金 + 零圆角语言。
+- **圆角策略**：营销页用 `rounded-full` 按钮、`rounded-xl/2xl` 卡片；控制台 nullframe 层不是全直角，而是混合使用 8px 按钮、12px 卡片/代码块、14px 下拉菜单、`rounded-full` 图标按钮。Clerk 登录组件通过 `clerkAppearance`（`src/main.tsx`）改成黑底 + 橙色主色 + 16px 圆角，与控制台新风格保持接近。
 
 ## 4. 布局与导航
 
 - **营销页**：Hero 占满 `h-screen`（nav 顶部 + 内容垂直居中 + ASCII 波浪垫底 + "Scroll ↓" 提示）；正文收窄到 `max-w-3xl` 单列，区块间距统一 `py-24`，列表型内容（Adapters、Pricing、API Reference、Packages）一律用 **上边框分隔的行式列表**（`border-t border-sand-400/10`）而非表格控件。
 - **首页导航**只有 Cloud / Docs（锚点）/ GitHub / 语言切换四项；**Cloud 页**桌面端展示六个锚点（Agent/Browser/DB9/Pricing/Webhooks/API），移动端折叠进自绘汉堡 `MobileMenu`（三条线动画变 ×，点击外部关闭，平滑滚动到锚点并 `history.replaceState`）。
-- **控制台**：sticky 顶栏（logo + ProjectSwitcher + Billing 图标 + Clerk UserButton，`backdrop-blur`），内容区 `lg:grid-cols-[16rem_1fr]`——桌面侧栏垂直导航，小屏退化为顶部横向滚动的 tab 条；侧栏底部固定语言切换器。导航图标是内联手绘 SVG（`PanelSvgIcon` 系列，24px stroke 风格）。
+- **控制台**：`PanelFrame` 外层套 `.panel-shell`，用 nullframe 黑/橙 token、点阵背景与 sticky 顶栏（logo + ProjectSwitcher + Billing 图标 + Clerk UserButton）。内容区 `lg:grid-cols-[16rem_1fr]`——桌面侧栏垂直导航，小屏退化为顶部横向滚动的 tab 条；侧栏底部固定语言切换器。导航图标是内联手绘 SVG（`PanelSvgIcon` 系列，24px stroke 风格）。
 
 ## 5. 交互模式
 
@@ -95,7 +97,7 @@
 | `PanelNav` | `src/pages/panel.tsx` | 响应式侧栏/横向 tab 双形态，内联 SVG 图标 |
 | `RelayCanvas` 系列 | `src/pages/panel.tsx` | 可平移关系画布 + 功能沙盒/公开节点目录（WeChat Box、Logbox、Browserbox、Mailsbox、Runnerbox…） |
 | `StatusBadge` / `CopyButton` / `SecretBanner` | cloud/panel | 轮询健康状态、剪贴板反馈、一次性密钥展示 |
-| `panel-button-primary/secondary` | `src/index.css` | 控制台按钮基类：mono、uppercase、8px 圆角、禁用态 0.42 透明度 |
+| `panel-button-primary/secondary` | `src/index.css` | 控制台按钮基类：mono、uppercase、8px 圆角、禁用态 0.42 透明度；在 `.panel-shell` 中视觉上服务于 nullframe 黑/橙体系 |
 
 ## 8. 响应式 / 无障碍
 
@@ -110,8 +112,8 @@
 
 ## 9. 设计债务与改进建议
 
-1. **圆角语言分裂**：营销页（`rounded-full/xl/2xl`）与控制台 + Clerk 主题（全直角、`borderRadius: 0`）是两套几何语言，且 `index.css` 里 `panel-button-*` 又是 8px 圆角——建议明确"营销=圆、控制台=方"的规则或统一 token 化（`--radius-*`）。
-2. **品牌色 token 重复定义**：`--color-sand-400: #D4A853`（index.css）与 Clerk 主题里的 `#d8ad48`、`#12110f` 等近似但不相等的硬编码并存（`src/main.tsx`），同一品牌色存在两个来源，应收敛为单一 token 引用。
+1. **两套视觉 token 并存但未命名成体系**：基础 `@theme` 是 sandbank 沙金主题，`.panel-shell` 覆盖为 nullframe 黑/橙主题；两者在代码里是 CSS 变量覆盖关系，但文档/设计系统尚未明确命名为两个 mode。建议把 `sandbank` / `nullframe-panel` 两套 token 明文化，避免后续继续把控制台当作普通营销页样式维护。
+2. **Clerk 主题仍是硬编码来源**：`clerkAppearance` 中的 `#f26522`、`#000000`、`#111111`、`borderRadius: '16px'` 与 `.panel-shell` token 语义一致但没有共享变量；同一 nullframe 色板存在 CSS 与 TS 两个维护点，应收敛为导出的 token 或至少在注释中建立映射。
 3. **`panel.tsx` 体量过大**（2700+ 行单文件，含十几个页面级组件、全部 interface 与 SVG 图标），组件无法复用也难以测试；建议拆为 `panel/` 目录（pages、components、icons、api client 分层）。
 4. **i18n 文案与组件耦合**：`src/i18n.ts` 1100+ 行三语字典在一个对象里，新增 key 需要同步三处且无缺失检测；可拆分语言文件并加 `TranslationKey` 完整性校验。
 5. **可访问性整改**（按收益排序）：为 `AsciiCanvas` 加 `prefers-reduced-motion` 静态降级；把 0.6rem + opacity 叠加的说明文字提升到 ≥0.7rem 或去掉叠加透明度；给自绘下拉补 listbox/menu 语义与键盘导航。
