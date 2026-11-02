@@ -17,3 +17,9 @@ DEFAULT_NODE_ORIGIN = "https://tyo-1.node.sandbank.dev"
 FALLBACK_NODE_ORIGIN = "https://cloud.sandbank.dev"
 NODE_ORIGINS_JSON = "{\"tyo-1\":\"https://tyo-1.node.sandbank.dev\",\"tyo-2\":\"https://tyo-2.node.sandbank.dev\"}"
 SCHEDULER_ORIGIN = "https://tyo-1.node.sandbank.dev/__scheduler"
+# Sign-in with the Chekusu account (workers/api/src/chekusu.ts). Off until the client id and the
+# CHEKUSU_CLIENT_SECRET / SESSION_SECRET secrets are all set.
+CHEKUSU_CLIENT_ID = "JLXfee8nj0YyylPz"
+PANEL_ORIGINS = "https://sandbank.dev"
+# {cid: old Clerk user id} for people whose tenants predate the switch (from the account migration mapping).
+CHEKUSU_LEGACY_USERS = "{\"ck_5rmmaxcax3gb9mck2j5j\":\"user_3DcnYLFQiS16tI5n6sM96QuCer8\",\"ck_eccn4t3qk2fs3gs404gt\":\"user_3DljBoofN7Pkfv0e9bmZPNUldXu\"}"

@@ -1,17 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useAuth,
-} from '@clerk/clerk-react'
+import { accountUrl, signInUrl, useChekusuSession } from '@/lib/chekusu-session'
 import { localeLabels, localeNames, locales, setLocale, type Locale } from '@/i18n'
 import { useLocale, useT } from '@/hooks/use-i18n'
 
-const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
 const API_BASE = (import.meta.env.VITE_SANDBANK_API_BASE as string | undefined) || 'https://api.sandbank.dev'
 const PANEL_ROOT = '/panel'
 const TENANT_WEBHOOK_EVENTS = ['box.error', 'box.terminated', 'box.status_changed'] as const
@@ -206,76 +198,89 @@ interface RelayCanvasEdge {
   kind: RelayCanvasEdgeKind
 }
 
+type PanelSession = ReturnType<typeof useChekusuSession>
+const PanelSessionContext = createContext<PanelSession | null>(null)
+const usePanelSession = () => useContext(PanelSessionContext)
+
 export default function Panel() {
   const t = useT()
-  const redirectUrl = getPanelRedirectUrl()
+  const locale = useLocale()
+  const session = useChekusuSession(API_BASE)
+  const loginUrl = typeof window === 'undefined' ? '#' : signInUrl(API_BASE, getPanelRedirectUrl(), locale)
 
-  if (!CLERK_KEY) {
-    return (
-      <PanelFrame>
-        <div className="panel-page flex min-h-screen flex-col px-5 py-6 sm:px-8">
-          <AuthTopbar />
-          <div className="flex flex-1 items-center">
-            <div className="panel-card max-w-xl border p-8">
-              <p className="mb-4 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-sand-400">
-                {t('panelSetup')}
-              </p>
-              <h1 className="panel-doto mb-4 text-5xl font-normal">{t('panelClerkMissing')}</h1>
-              <p className="font-mono text-[0.75rem] leading-relaxed text-text-muted">
-                {t('panelClerkMissingDesc')}
-              </p>
-            </div>
-          </div>
-        </div>
-      </PanelFrame>
-    )
+  if (session.status === 'loading') {
+    return <PanelFrame><div className="panel-page min-h-screen" /></PanelFrame>
   }
 
   return (
-    <PanelFrame>
-      <SignedOut>
-        <div className="panel-page flex min-h-screen flex-col px-5 py-6 sm:px-8">
-          <AuthTopbar />
-          <div className="flex flex-1 items-center">
-            <div className="max-w-2xl">
-              <p className="panel-system-label mb-5 flex items-center gap-3">
-                <span className="panel-led" />
-                <span>Sandbank {t('panel')}</span>
-              </p>
-              <h1 className="panel-doto mb-5 text-[clamp(3.25rem,10vw,7.5rem)] font-normal leading-[0.92] text-text-primary">
-                {t('panelSignedOutTitle')}
-              </h1>
-              <p className="mb-8 font-mono text-[0.78rem] leading-relaxed text-text-muted">
-                {t('panelSignedOutDesc')}
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <SignInButton
-                  mode="modal"
-                  forceRedirectUrl={redirectUrl}
-                  fallbackRedirectUrl={redirectUrl}
-                  signUpForceRedirectUrl={redirectUrl}
-                  signUpFallbackRedirectUrl={redirectUrl}
-                >
-                  <button className="panel-button-primary">{t('panelSignIn')}</button>
-                </SignInButton>
-                <SignUpButton
-                  mode="modal"
-                  forceRedirectUrl={redirectUrl}
-                  fallbackRedirectUrl={redirectUrl}
-                  signInForceRedirectUrl={redirectUrl}
-                  signInFallbackRedirectUrl={redirectUrl}
-                >
-                  <button className="panel-button-secondary">{t('panelCreateTenant')}</button>
-                </SignUpButton>
+    <PanelSessionContext.Provider value={session}>
+      <PanelFrame>
+        {session.status === 'signed-out' ? (
+          <div className="panel-page flex min-h-screen flex-col px-5 py-6 sm:px-8">
+            <AuthTopbar />
+            <div className="flex flex-1 items-center">
+              <div className="max-w-2xl">
+                <p className="panel-system-label mb-5 flex items-center gap-3">
+                  <span className="panel-led" />
+                  <span>Sandbank {t('panel')}</span>
+                </p>
+                <h1 className="panel-doto mb-5 text-[clamp(3.25rem,10vw,7.5rem)] font-normal leading-[0.92] text-text-primary">
+                  {t('panelSignedOutTitle')}
+                </h1>
+                <p className="mb-8 font-mono text-[0.78rem] leading-relaxed text-text-muted">
+                  {t('panelSignedOutDesc')}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <a className="panel-button-primary" href={loginUrl}>{t('panelSignIn')}</a>
+                  <a className="panel-button-secondary" href={loginUrl}>{t('panelCreateTenant')}</a>
+                </div>
+                <p className="mt-6 font-mono text-[0.68rem] leading-relaxed text-text-muted">{t('panelChekusuAccount')}</p>
               </div>
             </div>
           </div>
+        ) : (
+          <PanelDashboard />
+        )}
+      </PanelFrame>
+    </PanelSessionContext.Provider>
+  )
+}
+
+function AccountButton() {
+  const t = useT()
+  const locale = useLocale()
+  const session = usePanelSession()
+  const [open, setOpen] = useState(false)
+  const user = session?.user
+  if (!user) return null
+  const label = (user.name || user.email || user.cid).trim()
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        onClick={() => setOpen((value) => !value)}
+        className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.035] font-mono text-[0.8rem] uppercase text-text-primary hover:border-white/20"
+      >
+        {label.slice(0, 1)}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[#111] p-3 shadow-lg">
+          <p className="truncate px-2 pb-2 font-mono text-[0.72rem] text-text-muted">{user.email || user.cid}</p>
+          <a className="block rounded-xl px-2 py-2 text-[0.8rem] text-text-primary hover:bg-white/[0.06]" href={accountUrl(locale)}>
+            {t('panelManageAccount')}
+          </a>
+          <button
+            type="button"
+            className="block w-full rounded-xl px-2 py-2 text-left text-[0.8rem] text-text-primary hover:bg-white/[0.06]"
+            onClick={() => { void session?.signOut() }}
+          >
+            {t('panelSignOut')}
+          </button>
         </div>
-      </SignedOut>
-      <SignedIn>
-        <PanelDashboard />
-      </SignedIn>
-    </PanelFrame>
+      )}
+    </div>
   )
 }
 
@@ -283,7 +288,7 @@ function PanelDashboard() {
   const t = useT()
   const locale = useLocale()
   const location = useLocation()
-  const { getToken, isSignedIn } = useAuth()
+  const isSignedIn = usePanelSession()?.status === 'signed-in'
   const section = sectionFromPath(location.pathname)
   const [bootstrap, setBootstrap] = useState<BootstrapResponse | null>(null)
   const [summary, setSummary] = useState<SummaryResponse | null>(null)
@@ -301,17 +306,16 @@ function PanelDashboard() {
   const [loading, setLoading] = useState(false)
 
   const authedFetch = useCallback(async (path: string, init?: RequestInit) => {
-    const token = await getToken()
-    if (!token) throw new Error(t('panelErrorMissingToken'))
+    // The Chekusu session cookie on api.sandbank.dev authenticates the call.
     return fetch(`${API_BASE}${path}`, {
       ...init,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(init?.headers || {}),
-        Authorization: `Bearer ${token}`,
       },
     })
-  }, [getToken, t])
+  }, [])
 
   const requestJson = useCallback(async <T,>(path: string, errorKey: Parameters<typeof t>[0], init?: RequestInit): Promise<T> => {
     const res = await authedFetch(path, init)
@@ -860,7 +864,7 @@ function PanelHeader({
           >
             <BillingIcon className="h-5 w-5" />
           </Link>
-          <UserButton />
+          <AccountButton />
         </div>
       </div>
     </header>
