@@ -425,6 +425,19 @@ async function syncTenantAuthority(request: Request, db: D1Database): Promise<Re
     `).bind(key.id, key.tenant_id, key.project_id ?? null, key.key_hash, key.prefix, key.name, key.created_at ?? null, key.last_used_at ?? null, key.revoked_at ?? null))
   }
 
+  // The authority owns balances: its debits never reach a node's SQLite, so a
+  // node's balance_cents is stale for any account that already exists here.
+  // Only a brand-new account takes the node's balance as its opening balance;
+  // after that, balances move only through ledger rows, each applied once.
+  const knownAccounts = new Set<string>()
+  const billingTenantIds = new Set([
+    ...(body.billing_accounts ?? []).map((account) => account.tenant_id),
+    ...(body.ledger ?? []).map((ledger) => ledger.tenant_id),
+  ].filter((tenantId): tenantId is string => Boolean(tenantId)))
+  for (const tenantId of billingTenantIds) {
+    if (await getTenantBillingAccount(db, tenantId)) knownAccounts.add(tenantId)
+  }
+
   for (const account of body.billing_accounts ?? []) {
     if (!account.tenant_id || !Number.isFinite(account.balance_cents)) continue
     statements.push(db.prepare(`
@@ -439,30 +452,44 @@ async function syncTenantAuthority(request: Request, db: D1Database): Promise<Re
         card_brand = excluded.card_brand,
         card_last4 = excluded.card_last4,
         currency = excluded.currency,
-        balance_cents = excluded.balance_cents,
         auto_topup_enabled = excluded.auto_topup_enabled,
         auto_topup_threshold_cents = excluded.auto_topup_threshold_cents,
         auto_topup_amount_cents = excluded.auto_topup_amount_cents,
-        updated_at = excluded.updated_at
+        updated_at = CURRENT_TIMESTAMP
     `).bind(account.tenant_id, account.stripe_customer_id ?? null, account.stripe_payment_method_id ?? null, account.card_brand ?? null, account.card_last4 ?? null, account.currency ?? 'usd', Math.round(account.balance_cents), account.auto_topup_enabled ? 1 : 0, account.auto_topup_threshold_cents ?? 500, account.auto_topup_amount_cents ?? 2000, account.created_at ?? null, account.updated_at ?? null))
   }
 
   for (const ledger of body.ledger ?? []) {
     if (!ledger.id || !ledger.tenant_id || !ledger.kind || !Number.isFinite(ledger.amount_cents) || !Number.isFinite(ledger.balance_after_cents)) continue
+    const amount = Math.round(ledger.amount_cents)
+    if (!knownAccounts.has(ledger.tenant_id)) {
+      // History of a brand-new account is already in its opening balance.
+      statements.push(db.prepare(`
+        INSERT INTO tenant_balance_ledger (
+          id, tenant_id, kind, amount_cents, balance_after_cents,
+          box_id, description, stripe_payment_intent_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+        ON CONFLICT(id) DO NOTHING
+      `).bind(ledger.id, ledger.tenant_id, ledger.kind, amount, Math.round(ledger.balance_after_cents), ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null))
+      continue
+    }
+    // A row the authority has not seen yet (a top-up recorded on the node):
+    // move the authority balance by its amount and record the balance it
+    // produced here. Rows already present are left exactly as they are.
+    statements.push(db.prepare(`
+      UPDATE tenant_billing_accounts
+      SET balance_cents = balance_cents + ?, updated_at = CURRENT_TIMESTAMP
+      WHERE tenant_id = ? AND NOT EXISTS (SELECT 1 FROM tenant_balance_ledger WHERE id = ?)
+    `).bind(amount, ledger.tenant_id, ledger.id))
     statements.push(db.prepare(`
       INSERT INTO tenant_balance_ledger (
         id, tenant_id, kind, amount_cents, balance_after_cents,
         box_id, description, stripe_payment_intent_id, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
-      ON CONFLICT(id) DO UPDATE SET
-        tenant_id = excluded.tenant_id,
-        kind = excluded.kind,
-        amount_cents = excluded.amount_cents,
-        balance_after_cents = excluded.balance_after_cents,
-        box_id = excluded.box_id,
-        description = excluded.description,
-        stripe_payment_intent_id = excluded.stripe_payment_intent_id
-    `).bind(ledger.id, ledger.tenant_id, ledger.kind, Math.round(ledger.amount_cents), Math.round(ledger.balance_after_cents), ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null))
+      )
+      SELECT ?, tenant_id, ?, ?, balance_cents, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP)
+      FROM tenant_billing_accounts
+      WHERE tenant_id = ? AND NOT EXISTS (SELECT 1 FROM tenant_balance_ledger WHERE id = ?)
+    `).bind(ledger.id, ledger.kind, amount, ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null, ledger.tenant_id, ledger.id))
   }
 
   if (statements.length > 0) await db.batch(statements)
