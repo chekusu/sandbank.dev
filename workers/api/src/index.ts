@@ -1,6 +1,7 @@
 import { verifyToken } from '@clerk/backend'
+import { chekusuConfig, handleAuth, panelUserId, readSession, type ChekusuEnv } from './chekusu'
 
-interface Env {
+interface Env extends ChekusuEnv {
   CLERK_AUTHORIZED_PARTIES?: string
   CLERK_JWT_KEY?: string
   CLERK_SECRET_KEY?: string
@@ -135,6 +136,12 @@ export default {
       return handleTenantAuthority(request, url, env)
     }
 
+    if (url.pathname.startsWith('/auth/')) {
+      const chekusu = chekusuConfig(env)
+      if (!chekusu) return json({ error: 'Chekusu sign-in is not configured' }, 404)
+      return (await handleAuth(request, url, chekusu)) ?? json({ error: 'Not found' }, 404)
+    }
+
     if (url.pathname === '/__worker/health') {
       return json({
         ok: true,
@@ -149,6 +156,7 @@ export default {
         nodes,
         clerk_jwt_key_configured: Boolean(env.CLERK_JWT_KEY?.trim()),
         clerk_secret_configured: Boolean(env.CLERK_SECRET_KEY?.trim()),
+        chekusu_sign_in_configured: Boolean(chekusuConfig(env)),
         panel_auth_forwarding_secret_configured: Boolean(env.PANEL_AUTH_FORWARDING_SECRET?.trim()),
         tenant_db_configured: Boolean(env.TENANT_DB),
         tenant_authority_configured: Boolean(env.TENANT_DB && env.TENANT_AUTHORITY_TOKEN?.trim()),
@@ -497,6 +505,8 @@ async function buildNodeRequest(
 
   const headers = new Headers(request.headers)
   stripPanelAuthHeaders(headers)
+  // The Chekusu session cookie is for this Worker only; the node gets the signed user headers instead.
+  headers.delete('cookie')
   headers.set('x-sandbank-api-worker', '1')
   headers.set('x-forwarded-host', originalUrl.host)
   headers.set('x-forwarded-proto', originalUrl.protocol.replace(':', ''))
@@ -529,7 +539,13 @@ async function resolvePanelAuth(request: Request, url: URL, env: Env): Promise<P
   }
 
   const token = getBearerToken(request.headers.get('authorization'))
-  if (!token) return json({ error: 'Unauthorized' }, 401)
+  if (!token) {
+    // Signed in with the Chekusu account: the session cookie set by /auth/callback.
+    const chekusu = chekusuConfig(env)
+    const session = chekusu ? await readSession(chekusu, request) : null
+    if (!chekusu || !session) return json({ error: 'Unauthorized' }, 401)
+    return { userId: panelUserId(chekusu, session), email: session.email }
+  }
 
   const secretKey = env.CLERK_SECRET_KEY?.trim()
   const jwtKey = env.CLERK_JWT_KEY?.trim()

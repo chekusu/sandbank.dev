@@ -80,6 +80,8 @@ jobs:
 
           sync_secret PANEL_AUTH_FORWARDING_SECRET
           sync_secret CLERK_SECRET_KEY
+          sync_secret CHEKUSU_CLIENT_SECRET
+          sync_secret SESSION_SECRET
 
       - name: Deploy API worker
         run: npx --yes wrangler@4.92.0 deploy --config workers/api/wrangler.toml
