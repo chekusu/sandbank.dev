@@ -22,4 +22,4 @@ SCHEDULER_ORIGIN = "https://tyo-1.node.sandbank.dev/__scheduler"
 CHEKUSU_CLIENT_ID = ""
 PANEL_ORIGINS = "https://sandbank.dev"
 # {cid: old Clerk user id} for people whose tenants predate the switch (from the account migration mapping).
-CHEKUSU_LEGACY_USERS = "{}"
+CHEKUSU_LEGACY_USERS = "{\"ck_5rmmaxcax3gb9mck2j5j\":\"user_3DcnYLFQiS16tI5n6sM96QuCer8\",\"ck_eccn4t3qk2fs3gs404gt\":\"user_3DljBoofN7Pkfv0e9bmZPNUldXu\"}"
