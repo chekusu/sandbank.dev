@@ -5,7 +5,7 @@ on:
 
 jobs:
   configure-clerk-dns:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, tyo-deploy-public]
     permissions:
       contents: read
     strategy:
@@ -29,10 +29,12 @@ jobs:
         with:
           node-version: 22
 
+      # Keys come from the sandbank-tyo key store (deploy.sandbank.dev); this repo has no GitHub secrets.
+      - name: Load keys
+        run: vas-ci-env deploy.sandbank.dev CLOUDFLARE_API_TOKEN CLOUDFLARE_ZONE_ID
+
       - name: Upsert Clerk CNAME
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_ZONE_NAME: sandbank.dev
           DNS_RECORD_NAME: ${{ matrix.record.name }}
           DNS_RECORD_TYPE: CNAME

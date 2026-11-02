@@ -1,13 +1,43 @@
 name: Deploy API Worker
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/api/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-api-worker.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  deploy-api-worker:
+  check:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck:api-worker
+      - run: pnpm test:api-worker
+
+  # Production deploys happen only here: after the checks pass on main, on the
+  # sandbank-tyo runner reserved for public repositories, with keys from the
+  # server's key store (deploy.sandbank.dev).
+  deploy-api-worker:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, tyo-deploy-public]
+    concurrency:
+      group: production-deploy-api
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -21,13 +51,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm exec tsc -p workers/api/tsconfig.json
+      - name: Load deploy keys
+        run: vas-ci-env deploy.sandbank.dev
 
       - name: Ensure TYO node DNS
         continue-on-error: true
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_ZONE_NAME: sandbank.dev
           DNS_RECORD_NAME: tyo-1.node.sandbank.dev
           DNS_RECORD_TYPE: A
@@ -36,29 +65,21 @@ jobs:
         run: node scripts/upsert-cloudflare-dns-record.mjs
 
       - name: Sync API worker secrets
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          PANEL_AUTH_FORWARDING_SECRET: ${{ secrets.PANEL_AUTH_FORWARDING_SECRET }}
         run: |
           set -euo pipefail
 
           sync_secret() {
             local name="$1"
-            local value="$2"
+            local value="${!name:-}"
             if [[ -z "$value" ]]; then
-              echo "::notice::${name} is not configured in GitHub; preserving any existing Worker secret."
+              echo "::notice::${name} is not in the key store (deploy.sandbank.dev); preserving any existing Worker secret."
               return
             fi
-            printf '%s' "$value" | pnpm dlx wrangler@4 secret put "$name" --config workers/api/wrangler.toml
+            printf '%s' "$value" | npx --yes wrangler@4.92.0 secret put "$name" --config workers/api/wrangler.toml
           }
 
-          sync_secret PANEL_AUTH_FORWARDING_SECRET "$PANEL_AUTH_FORWARDING_SECRET"
-          sync_secret CLERK_SECRET_KEY "$CLERK_SECRET_KEY"
+          sync_secret PANEL_AUTH_FORWARDING_SECRET
+          sync_secret CLERK_SECRET_KEY
 
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config workers/api/wrangler.toml
+      - name: Deploy API worker
+        run: npx --yes wrangler@4.92.0 deploy --config workers/api/wrangler.toml
