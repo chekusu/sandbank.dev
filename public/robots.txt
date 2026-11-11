@@ -1,0 +1,6 @@
+# Search engines and AI assistants are welcome to read and cite the public pages.
+User-agent: *
+Allow: /
+Disallow: /panel
+Sitemap: https://sandbank.dev/sitemap.xml
+# A plain-text summary for AI assistants: https://sandbank.dev/llms.txt
