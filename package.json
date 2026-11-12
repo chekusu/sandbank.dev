@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "portless sandbank-dev vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "portless sandbank-dev vite preview",
     "test:api-worker": "vitest run workers/api/src",
     "typecheck:api-worker": "tsc -p workers/api/tsconfig.json"
