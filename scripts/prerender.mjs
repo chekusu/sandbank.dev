@@ -13,7 +13,9 @@ const { render, paths } = await import(pathToFileURL(join(outDir, 'entry-prerend
 const template = readFileSync(join(root, 'dist/index.html'), 'utf8')
 if (!template.includes('<div id="root"></div>')) throw new Error('dist/index.html has no empty #root to fill')
 for (const path of paths) {
-  const html = template.replace('<div id="root"></div>', `<div id="root">${render(path)}</div>`)
+  const html = template
+    .replace('<link rel="canonical" href="https://sandbank.dev/" />', `<link rel="canonical" href="https://sandbank.dev${path}" />`)
+    .replace('<div id="root"></div>', `<div id="root">${render(path)}</div>`)
   const file = path === '/' ? join(root, 'dist/index.html') : join(root, 'dist', `${path}.html`)  // /cloud → cloud.html, served at /cloud with no redirect
   mkdirSync(dirname(file), { recursive: true })
   writeFileSync(file, html)
