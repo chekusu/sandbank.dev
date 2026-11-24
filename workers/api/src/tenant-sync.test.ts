@@ -95,6 +95,25 @@ function balanceOf(sqlite: SqliteDatabase): number {
 }
 
 describe('tenant authority sync billing', () => {
+  it('applies a concurrent first top-up once when the empty opening snapshot commits first', async () => {
+    const { sqlite, env } = authorityEnv()
+    const batch = env.TENANT_DB.batch.bind(env.TENANT_DB)
+    let release!: () => void
+    const both = new Promise<void>(resolve => { release = resolve })
+    let started = 0
+    env.TENANT_DB.batch = async (statements) => {
+      if (++started === 2) release()
+      await both
+      return batch(statements)
+    }
+    await Promise.all([0, 500].map(amount => post(env, '/internal/tenant/sync', {
+      tenants: [tenant], billing_accounts: [{ tenant_id: tenant.id, balance_cents: amount }],
+      ledger: amount ? [{ id: 'first', tenant_id: tenant.id, kind: 'credit', amount_cents: amount, balance_after_cents: amount }] : [],
+    })))
+    expect(balanceOf(sqlite)).toBe(500)
+    expect(sqlite.prepare('SELECT balance_after_cents FROM tenant_balance_ledger').get()).toEqual({ balance_after_cents: 500 })
+  })
+
   it('keeps the authority balance when a node later syncs a stale one', async () => {
     const { sqlite, env } = authorityEnv()
     await post(env, '/internal/tenant/sync', { tenants: [tenant], billing_accounts: [{ tenant_id: 'tenant-1', balance_cents: 1000 }] })
