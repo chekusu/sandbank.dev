@@ -429,13 +429,26 @@ async function syncTenantAuthority(request: Request, db: D1Database): Promise<Re
   // node's balance_cents is stale for any account that already exists here.
   // Only a brand-new account takes the node's balance as its opening balance;
   // after that, balances move only through ledger rows, each applied once.
-  const knownAccounts = new Set<string>()
-  const billingTenantIds = new Set([
-    ...(body.billing_accounts ?? []).map((account) => account.tenant_id),
-    ...(body.ledger ?? []).map((ledger) => ledger.tenant_id),
-  ].filter((tenantId): tenantId is string => Boolean(tenantId)))
-  for (const tenantId of billingTenantIds) {
-    if (await getTenantBillingAccount(db, tenantId)) knownAccounts.add(tenantId)
+  // Process ledger rows before inserting a missing account, in the same batch.
+  // For an existing account, an unseen row adjusts its balance. A new account
+  // records the node's history and takes its opening balance from the snapshot.
+  for (const ledger of body.ledger ?? []) {
+    if (!ledger.id || !ledger.tenant_id || !ledger.kind || !Number.isFinite(ledger.amount_cents) || !Number.isFinite(ledger.balance_after_cents)) continue
+    const amount = Math.round(ledger.amount_cents)
+    statements.push(db.prepare(`
+      UPDATE tenant_billing_accounts
+      SET balance_cents = balance_cents + ?, updated_at = CURRENT_TIMESTAMP
+      WHERE tenant_id = ? AND NOT EXISTS (SELECT 1 FROM tenant_balance_ledger WHERE id = ?)
+    `).bind(amount, ledger.tenant_id, ledger.id))
+    statements.push(db.prepare(`
+      INSERT INTO tenant_balance_ledger (
+        id, tenant_id, kind, amount_cents, balance_after_cents,
+        box_id, description, stripe_payment_intent_id, created_at
+      ) VALUES (?, ?, ?, ?, COALESCE((SELECT balance_cents FROM tenant_billing_accounts WHERE tenant_id = ?), ?),
+        ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+      ON CONFLICT(id) DO NOTHING
+    `).bind(ledger.id, ledger.tenant_id, ledger.kind, amount, ledger.tenant_id, Math.round(ledger.balance_after_cents),
+      ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null))
   }
 
   for (const account of body.billing_accounts ?? []) {
@@ -457,39 +470,6 @@ async function syncTenantAuthority(request: Request, db: D1Database): Promise<Re
         auto_topup_amount_cents = excluded.auto_topup_amount_cents,
         updated_at = CURRENT_TIMESTAMP
     `).bind(account.tenant_id, account.stripe_customer_id ?? null, account.stripe_payment_method_id ?? null, account.card_brand ?? null, account.card_last4 ?? null, account.currency ?? 'usd', Math.round(account.balance_cents), account.auto_topup_enabled ? 1 : 0, account.auto_topup_threshold_cents ?? 500, account.auto_topup_amount_cents ?? 2000, account.created_at ?? null, account.updated_at ?? null))
-  }
-
-  for (const ledger of body.ledger ?? []) {
-    if (!ledger.id || !ledger.tenant_id || !ledger.kind || !Number.isFinite(ledger.amount_cents) || !Number.isFinite(ledger.balance_after_cents)) continue
-    const amount = Math.round(ledger.amount_cents)
-    if (!knownAccounts.has(ledger.tenant_id)) {
-      // History of a brand-new account is already in its opening balance.
-      statements.push(db.prepare(`
-        INSERT INTO tenant_balance_ledger (
-          id, tenant_id, kind, amount_cents, balance_after_cents,
-          box_id, description, stripe_payment_intent_id, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
-        ON CONFLICT(id) DO NOTHING
-      `).bind(ledger.id, ledger.tenant_id, ledger.kind, amount, Math.round(ledger.balance_after_cents), ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null))
-      continue
-    }
-    // A row the authority has not seen yet (a top-up recorded on the node):
-    // move the authority balance by its amount and record the balance it
-    // produced here. Rows already present are left exactly as they are.
-    statements.push(db.prepare(`
-      UPDATE tenant_billing_accounts
-      SET balance_cents = balance_cents + ?, updated_at = CURRENT_TIMESTAMP
-      WHERE tenant_id = ? AND NOT EXISTS (SELECT 1 FROM tenant_balance_ledger WHERE id = ?)
-    `).bind(amount, ledger.tenant_id, ledger.id))
-    statements.push(db.prepare(`
-      INSERT INTO tenant_balance_ledger (
-        id, tenant_id, kind, amount_cents, balance_after_cents,
-        box_id, description, stripe_payment_intent_id, created_at
-      )
-      SELECT ?, tenant_id, ?, ?, balance_cents, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP)
-      FROM tenant_billing_accounts
-      WHERE tenant_id = ? AND NOT EXISTS (SELECT 1 FROM tenant_balance_ledger WHERE id = ?)
-    `).bind(ledger.id, ledger.kind, amount, ledger.box_id ?? null, ledger.description ?? null, ledger.stripe_payment_intent_id ?? null, ledger.created_at ?? null, ledger.tenant_id, ledger.id))
   }
 
   if (statements.length > 0) await db.batch(statements)
