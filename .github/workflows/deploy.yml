@@ -9,9 +9,9 @@ permissions:
   contents: read
 
 jobs:
-  # Checks run on GitHub-hosted machines and never see a key.
+  # Checks run on the self-hosted hayabuild-linux pool and never load a key.
   check:
-    runs-on: ubuntu-latest
+    runs-on: hayabuild-linux
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

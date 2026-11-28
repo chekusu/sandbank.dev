@@ -37,7 +37,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: hayabuild-linux
     outputs:
       should_deploy: ${{ steps.check.outputs.should_deploy }}
       reason: ${{ steps.check.outputs.reason }}
